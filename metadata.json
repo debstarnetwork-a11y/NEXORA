@@ -1,0 +1,8 @@
+{
+  "name": "NEXORA",
+  "description": "A modern, premium AI research and image generation application.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
