@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Image as ImageIcon, Paperclip, Copy, RotateCcw, Trash2, PlusCircle, User, Bot, Loader2, Mic, MicOff, FileDown } from 'lucide-react';
+import { Send, Image as ImageIcon, Paperclip, Copy, RotateCcw, Trash2, PlusCircle, User, Bot, Loader2, Mic, MicOff, FileDown, Sparkles, ShieldCheck } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { ChatMessage } from '../types';
 import { useAppStore } from '../store';
 import { useSpeech } from '../hooks/useSpeech';
+import { puterChat } from '../lib/puter';
 
 export function AIResearch() {
   const [messages, setMessages] = useState<ChatMessage[]>([{
@@ -14,6 +15,8 @@ export function AIResearch() {
   }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chatEngine, setChatEngine] = useState<string>('puter-gpt-4o-mini');
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { saveChat } = useAppStore();
   const { isListening, startListening, stopListening, isSupported } = useSpeech();
@@ -49,26 +52,58 @@ export function AIResearch() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setFallbackNotice(null);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMessage.content })
-      });
+      if (chatEngine.startsWith('puter-')) {
+        let puterModel = 'gpt-4o-mini';
+        if (chatEngine === 'puter-claude-3-5') puterModel = 'claude-3-5-sonnet';
+        if (chatEngine === 'puter-deepseek') puterModel = 'deepseek-chat';
+        if (chatEngine === 'puter-gpt-4o') puterModel = 'gpt-4o';
 
-      const data = await response.json();
-      
-      if (response.ok) {
+        const reply = await puterChat(userMessage.content, puterModel);
         const modelMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          content: data.text,
+          content: reply,
           timestamp: Date.now()
         };
         setMessages(prev => [...prev, modelMessage]);
       } else {
-        throw new Error(data.error || 'Failed to generate response');
+        // Try Gemini backend API first
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: userMessage.content })
+          });
+
+          const data = await response.json();
+          if (response.ok && data.text) {
+            const modelMessage: ChatMessage = {
+              id: (Date.now() + 1).toString(),
+              role: 'model',
+              content: data.text,
+              timestamp: Date.now()
+            };
+            setMessages(prev => [...prev, modelMessage]);
+            return;
+          } else {
+            throw new Error(data.error || 'Gemini API unavailable');
+          }
+        } catch (geminiErr: any) {
+          console.warn('Gemini chat failed, seamlessly falling back to Puter.js AI:', geminiErr);
+          setFallbackNotice('Gemini quota reached. Seamlessly answered via free Puter.js AI (No card/IP block).');
+          
+          const reply = await puterChat(userMessage.content, 'gpt-4o-mini');
+          const modelMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'model',
+            content: reply,
+            timestamp: Date.now()
+          };
+          setMessages(prev => [...prev, modelMessage]);
+        }
       }
     } catch (error: any) {
       console.error(error);
@@ -163,9 +198,36 @@ export function AIResearch() {
 
   return (
     <div className="h-full flex flex-col max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-purple-900 tracking-tight">AI Research</h2>
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-3xl font-bold text-purple-900 tracking-tight flex items-center gap-2.5">
+            AI Research
+            <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200 inline-flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              Puter.js Protected
+            </span>
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            100% Free AI chat without API keys, credit cards, or IP account blocking.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* AI Engine Selector */}
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
+            <span className="text-slate-500 font-medium pl-2 hidden sm:inline">Engine:</span>
+            <select
+              value={chatEngine}
+              onChange={(e) => setChatEngine(e.target.value)}
+              className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-900 cursor-pointer text-xs"
+            >
+              <option value="puter-gpt-4o-mini">Puter.js: GPT-4o-mini (100% Free)</option>
+              <option value="puter-claude-3-5">Puter.js: Claude 3.5 Sonnet (Free)</option>
+              <option value="puter-deepseek">Puter.js: DeepSeek Chat (Free)</option>
+              <option value="gemini-flash">Gemini 2.5 Flash (Auto Fallback)</option>
+            </select>
+          </div>
+
           <button onClick={handleExportPDF} className="p-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-purple-900 transition-all shadow-sm" title="Export as PDF">
             <FileDown className="w-5 h-5" />
           </button>
@@ -177,6 +239,21 @@ export function AIResearch() {
           </button>
         </div>
       </div>
+
+      {fallbackNotice && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{fallbackNotice}</span>
+          </div>
+          <button 
+            onClick={() => setFallbackNotice(null)}
+            className="text-amber-600 hover:text-amber-800 text-xs font-bold ml-3"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="flex-1 overflow-y-auto p-6 space-y-8">

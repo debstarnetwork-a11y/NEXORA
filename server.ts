@@ -6,7 +6,6 @@ import OpenAI from "openai";
 
 let aiClient: GoogleGenAI | null = null;
 let openaiClient: OpenAI | null = null;
-let xaiClient: OpenAI | null = null;
 
 function getAIClient() {
   if (!aiClient) {
@@ -37,19 +36,6 @@ function getOpenAIClient() {
   return openaiClient;
 }
 
-function getXAIClient() {
-  if (!xaiClient) {
-    if (!process.env.XAI_API_KEY) {
-      throw new Error("XAI_API_KEY is not set.");
-    }
-    xaiClient = new OpenAI({
-      apiKey: process.env.XAI_API_KEY,
-      baseURL: "https://api.x.ai/v1",
-    });
-  }
-  return xaiClient;
-}
-
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -60,23 +46,6 @@ async function startServer() {
   app.post("/api/chat", async (req, res) => {
     try {
       const { prompt, history } = req.body;
-      
-      // Prefer xAI if the key is configured
-      if (process.env.XAI_API_KEY) {
-        try {
-          const xai = getXAIClient();
-          const response = await xai.chat.completions.create({
-            model: "grok-beta",
-            messages: [
-              { role: "system", content: "You are a helpful AI research assistant." },
-              { role: "user", content: prompt }
-            ]
-          });
-          return res.json({ text: response.choices[0].message.content });
-        } catch (error: any) {
-          // Silent fallback for xAI
-        }
-      }
 
       // Prefer OpenAI if the key is configured
       if (process.env.OPENAI_API_KEY) {
@@ -127,26 +96,81 @@ async function startServer() {
   // Image generation API
   app.post("/api/generate-image", async (req, res) => {
     try {
-      const { prompt, aspectRatio = "1:1", quality = "1K", negativePrompt, model = "gemini-3.1-flash-image", style = "" } = req.body;
+      const { 
+        prompt, 
+        aspectRatio = "1:1", 
+        quality = "1K", 
+        negativePrompt, 
+        model = "gemini-3.1-flash-image", 
+        style = "",
+        antiDeformation = true 
+      } = req.body;
       
       let styleModifier = "";
       switch(style) {
-          case "Nexora Vision Fast": styleModifier = ", 8k resolution, highly detailed, sharp focus, fast action, dynamic"; break;
-          case "Nexora Vision Pro": styleModifier = ", 8k resolution, raw photo, masterpiece, photorealistic, cinematic lighting, ultra-sharp focus"; break;
-          case "Nexora Vision Lite": styleModifier = ", 4k resolution, clean, well-lit, realistic"; break;
-          case "Nexora Studio XL": styleModifier = ", medium format photography, studio lighting, hyper-detailed, 8k, professional photoshoot"; break;
-          case "Nexora Cinematic": styleModifier = ", cinematic lighting, anamorphic lens, movie still, dramatic color grading, 8k"; break;
-          case "Nexora Film Noir": styleModifier = ", film noir style, high contrast black and white, dramatic shadows, 1940s cinematic"; break;
-          case "Nexora Polaroid": styleModifier = ", polaroid vintage photo, retro color grading, soft focus, instant film artifacts, nostalgic"; break;
-          case "Nexora Animate Cartoon": styleModifier = ", high quality 3D animation style, vibrant colors, detailed textures, cartoon"; break;
-          case "Nexora Stick Cartoon": styleModifier = ", high quality stick figure cartoon style, simple crisp lines, 2D flat illustration, minimalist drawing"; break;
+          case "Nexora Vision Pro": 
+            styleModifier = ", photorealistic masterpiece, 8k uhd, razor-sharp focus, symmetrical facial features, accurate anatomy, natural skin pores, cinematic volumetric lighting"; 
+            break;
+          case "Nexora Studio XL": 
+            styleModifier = ", professional studio photography, medium format 100MP camera, sharp focal plane, perfect lighting, crisp textures, ultra-detailed"; 
+            break;
+          case "Nexora Cinematic": 
+            styleModifier = ", 35mm anamorphic movie still, cinematic film grading, crystal clear focal point, 8k resolution, photorealism, high dynamic range"; 
+            break;
+          case "Nexora Digital Art": 
+            styleModifier = ", high-end digital concept art, sharp detailed lines, vibrant atmospheric lighting, intricate details, trending on artstation"; 
+            break;
+          case "Nexora Vision Fast": 
+            styleModifier = ", highly detailed, sharp focus, dynamic composition, 8k resolution, clear lighting"; 
+            break;
           default:
-              if (!prompt.includes("realistic") && !prompt.includes("realism")) {
-                  styleModifier = ", 8k resolution, raw photo, highly detailed, masterpiece, photorealistic, cinematic lighting, ultra-sharp focus";
-              }
-              break;
+            if (antiDeformation) {
+              styleModifier = ", ultra-sharp focus, pristine 8k resolution, symmetrical face, clear eyes, anatomically correct hands and fingers, highly detailed texture, professional photography";
+            }
+            break;
       }
       const enhancedPrompt = `${prompt}${styleModifier}`;
+
+      const defaultNegative = "blurry, out of focus, low quality, deformed hands, extra fingers, missing fingers, fused fingers, malformed limbs, distorted face, bad anatomy, bad eyes, crossed eyes, disfigured, low resolution, pixelated, ugly, artifacts, watermark";
+      const finalNegativePrompt = (negativePrompt || (antiDeformation ? defaultNegative : "")).trim();
+
+      if (model === 'pollinations-flux' || model === 'pollinations-turbo') {
+        let width = 1024;
+        let height = 1024;
+        if (aspectRatio === "16:9") { width = 1280; height = 720; }
+        else if (aspectRatio === "9:16") { width = 720; height = 1280; }
+        else if (aspectRatio === "4:3") { width = 1152; height = 864; }
+        else if (aspectRatio === "3:4") { width = 864; height = 1152; }
+
+        if (quality.includes('4K')) {
+          width = Math.min(1920, Math.round(width * 1.5));
+          height = Math.min(1920, Math.round(height * 1.5));
+        } else if (quality.includes('2K')) {
+          width = Math.min(1536, Math.round(width * 1.25));
+          height = Math.min(1536, Math.round(height * 1.25));
+        }
+
+        const seed = Math.floor(Math.random() * 1000000000);
+        let polliUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?model=flux&width=${width}&height=${height}&seed=${seed}&nologo=true&enhance=true`;
+        if (finalNegativePrompt) {
+          polliUrl += `&negative_prompt=${encodeURIComponent(finalNegativePrompt)}`;
+        }
+
+        const polliResponse = await fetch(polliUrl, {
+          headers: {
+            "User-Agent": "Nexora-App/2.0"
+          }
+        });
+
+        if (!polliResponse.ok) {
+          throw new Error(`Free FLUX generation failed (${polliResponse.status}): ${polliResponse.statusText}`);
+        }
+
+        const arrayBuffer = await polliResponse.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = polliResponse.headers.get('content-type') || 'image/jpeg';
+        return res.json({ imageUrl: `data:${mimeType};base64,${base64}` });
+      }
 
       if (model === 'replicate-flux-dev') {
         const replicateKey = (process.env.REPLICATE_API_TOKEN || "").trim();
@@ -293,7 +317,11 @@ async function startServer() {
         aspectRatio: aspectRatio || "1:1",
       };
       if (model === 'gemini-3.1-flash-image' || model === 'gemini-3-pro-image') {
-        imageConfig.imageSize = quality || "1K";
+        let geminiSize = "1K";
+        if (quality.includes("2K")) geminiSize = "2K";
+        else if (quality.includes("4K")) geminiSize = "4K";
+        else if (quality.includes("512")) geminiSize = "512px";
+        imageConfig.imageSize = geminiSize;
       }
 
       const response = await ai.models.generateContent({

@@ -1,4 +1,4 @@
-import { useState, useMemo, MouseEvent } from 'react';
+import { useState, useEffect, useMemo, MouseEvent } from 'react';
 import { 
   Image as ImageIcon, 
   Download, 
@@ -9,47 +9,54 @@ import {
   Sparkles, 
   Info, 
   X, 
-  AlertCircle,
-  History,
-  RotateCcw,
-  Trash2,
-  Clock,
-  Search,
-  Check,
-  Eye,
-  ArrowRight,
-  SlidersHorizontal,
-  ChevronRight,
-  Gift,
-  ExternalLink,
-  HelpCircle
+  AlertCircle, 
+  History, 
+  RotateCcw, 
+  Trash2, 
+  Clock, 
+  Search, 
+  Check, 
+  Eye, 
+  ArrowRight, 
+  SlidersHorizontal, 
+  ChevronRight, 
+  Gift, 
+  ExternalLink, 
+  HelpCircle,
+  Database,
+  ShieldCheck
 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { ImageHistoryItem } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { insertSupabaseImageHistory, fetchSupabaseImageHistory, isSupabaseConfigured } from '../lib/supabase';
+import { puterGenerateImage } from '../lib/puter';
 
 const STORAGE_KEY = 'nexora_image_studio_history';
 
+const DEFAULT_NEGATIVE_PROMPT = 'blurry, out of focus, low quality, deformed hands, extra fingers, missing fingers, mutated hands, bad anatomy, bad eyes, crossed eyes, disfigured, distorted face, low resolution, ugly, artifacts, watermark';
+
 const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4'];
-const QUALITIES = ['512px', '1K', '2K', '4K'];
+const QUALITIES = ['1K (High-Definition)', '2K (Ultra-Sharp)', '4K (Maximum Crisp)'];
 const MODELS = [
+  { label: 'Puter.js: FLUX.1 Schnell (Ultra-Sharp - 100% Free)', value: 'puter-flux' },
+  { label: 'Puter.js: GPT-Image 2 (High-Fidelity Photorealism - Free)', value: 'puter-gpt-image' },
+  { label: 'Puter.js: AI General (Free Auto-Select)', value: 'puter-image' },
+  { label: 'FLUX.1 High-Definition (100% Free - Serverless)', value: 'pollinations-flux' },
   { label: 'Gemini 3.1 Flash Image (Google Cloud Credits)', value: 'gemini-3.1-flash-image' },
   { label: 'Gemini 3 Pro Image (Google Cloud Credits)', value: 'gemini-3-pro-image' },
-  { label: 'FLUX.1 Schnell (Hugging Face - Free Token)', value: 'huggingface-flux' },
   { label: 'Flux.1 Schnell (Together AI - Free Trial)', value: 'together-flux' },
+  { label: 'FLUX.1 Schnell (Hugging Face - Free Token)', value: 'huggingface-flux' },
   { label: 'Flux.1 [dev] (Replicate)', value: 'replicate-flux-dev' }
 ];
 
 const STYLES = [
-  { label: 'Nexora Vision Pro (Default)', value: 'Nexora Vision Pro' },
-  { label: 'Nexora Vision Fast', value: 'Nexora Vision Fast' },
-  { label: 'Nexora Vision Lite', value: 'Nexora Vision Lite' },
-  { label: 'Nexora Studio XL', value: 'Nexora Studio XL' },
-  { label: 'Nexora Cinematic', value: 'Nexora Cinematic' },
-  { label: 'Nexora Film Noir', value: 'Nexora Film Noir' },
-  { label: 'Nexora Polaroid', value: 'Nexora Polaroid' },
-  { label: 'Nexora Animate Cartoon', value: 'Nexora Animate Cartoon' },
-  { label: 'Nexora Stick Cartoon', value: 'Nexora Stick Cartoon' }
+  { label: 'Nexora Vision Pro (Photorealistic Masterpiece)', value: 'Nexora Vision Pro' },
+  { label: 'Nexora Studio XL (Hasselblad Studio 100MP)', value: 'Nexora Studio XL' },
+  { label: 'Nexora Cinematic (35mm Anamorphic Film)', value: 'Nexora Cinematic' },
+  { label: 'Nexora Digital Art (Sharp Concept Illustration)', value: 'Nexora Digital Art' },
+  { label: 'Nexora Anime High-Res (Makoto Shinkai Crisp)', value: 'Nexora Anime High-Res' },
+  { label: 'Nexora Vision Fast (Crisp Dynamic)', value: 'Nexora Vision Fast' }
 ];
 
 // Helper to safely load initial history from localStorage
@@ -67,17 +74,19 @@ const loadStoredHistory = (): ImageHistoryItem[] => {
 
 export function ImageStudio() {
   const [prompt, setPrompt] = useState('');
-  const [negativePrompt, setNegativePrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
   const [aspectRatio, setAspectRatio] = useState('1:1');
-  const [quality, setQuality] = useState('1K');
-  const [model, setModel] = useState('gemini-3.1-flash-image');
+  const [quality, setQuality] = useState('1K (High-Definition)');
+  const [model, setModel] = useState('puter-flux');
   const [style, setStyle] = useState('Nexora Vision Pro');
+  const [antiDeformation, setAntiDeformation] = useState(true);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [isFreeCreditsModalOpen, setIsFreeCreditsModalOpen] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
@@ -99,6 +108,17 @@ export function ImageStudio() {
     }, 2800);
   };
 
+  const handleEnhancePrompt = () => {
+    if (!prompt.trim()) {
+      showToast('Type a prompt description first to enhance it!');
+      return;
+    }
+    const base = prompt.trim().replace(/,\s*(masterpiece|8k|sharp focus|ultra-detailed|photorealistic).*$/i, '');
+    const enhanced = `${base}, masterpiece photograph, 8k resolution, razor-sharp focus, symmetrical clear eyes, anatomically correct hands and fingers, smooth natural skin texture, professional cinematic lighting, crisp fine details`;
+    setPrompt(enhanced);
+    showToast('Prompt upgraded with Anti-Deformation & Sharpness filters!');
+  };
+
   // Persist updated history to localStorage safely
   const persistHistory = (updatedHistory: ImageHistoryItem[]) => {
     setHistory(updatedHistory);
@@ -115,6 +135,22 @@ export function ImageStudio() {
     }
   };
 
+  // Sync from Supabase on component mount if configured
+  useEffect(() => {
+    if (isSupabaseConfigured) {
+      fetchSupabaseImageHistory().then((cloudItems) => {
+        if (cloudItems && cloudItems.length > 0) {
+          setHistory((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const toAdd = cloudItems.filter((c) => !existingIds.has(c.id));
+            if (toAdd.length === 0) return prev;
+            return [...toAdd, ...prev].slice(0, 50);
+          });
+        }
+      });
+    }
+  }, []);
+
   const handleGenerate = async () => {
     if (!prompt.trim() || isGenerating || isImageLoading) return;
     setIsGenerating(true);
@@ -130,27 +166,52 @@ export function ImageStudio() {
     const currentStyle = style;
 
     try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: currentPrompt, 
-          negativePrompt: currentNegativePrompt, 
-          aspectRatio: currentAspectRatio, 
-          quality: currentQuality, 
-          model: currentModel, 
-          style: currentStyle 
-        })
-      });
+      let finalImageUrl = '';
 
-      const data = await response.json();
-      if (response.ok && data.imageUrl) {
-        if (data.warning) setWarning(data.warning);
+      if (currentModel.startsWith('puter-')) {
+        let puterModel = 'black-forest-labs/flux-schnell';
+        if (currentModel === 'puter-gpt-image') puterModel = 'openai/gpt-image-2';
+        else if (currentModel === 'puter-flux') puterModel = 'black-forest-labs/flux-schnell';
+
+        const styleModifier = currentStyle && currentStyle !== 'Nexora Vision Pro' ? `, style of ${currentStyle}` : '';
+        const enhancedPrompt = `${currentPrompt}${styleModifier}`;
+
+        finalImageUrl = await puterGenerateImage(enhancedPrompt, {
+          model: puterModel,
+          aspectRatio: currentAspectRatio,
+          quality: currentQuality,
+          antiDeformation: antiDeformation
+        });
+      } else {
+        const response = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt: currentPrompt, 
+            negativePrompt: currentNegativePrompt || (antiDeformation ? DEFAULT_NEGATIVE_PROMPT : ''), 
+            aspectRatio: currentAspectRatio, 
+            quality: currentQuality, 
+            model: currentModel, 
+            style: currentStyle,
+            antiDeformation: antiDeformation
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.imageUrl) {
+          finalImageUrl = data.imageUrl;
+          if (data.warning) setWarning(data.warning);
+        } else {
+          throw new Error(data.error || 'Failed to generate image');
+        }
+      }
+
+      if (finalImageUrl) {
         setIsImageLoading(true);
 
         const newHistoryItem: ImageHistoryItem = {
           id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          imageUrl: data.imageUrl,
+          imageUrl: finalImageUrl,
           prompt: currentPrompt,
           negativePrompt: currentNegativePrompt || undefined,
           aspectRatio: currentAspectRatio,
@@ -163,21 +224,27 @@ export function ImageStudio() {
         // Pre-load the image so it doesn't show blank/broken while downloading
         const img = new Image();
         const onFinish = () => {
-          setGeneratedImage(data.imageUrl);
+          setGeneratedImage(finalImageUrl);
           setActiveHistoryItem(newHistoryItem);
           setIsImageLoading(false);
           setIsGenerating(false);
 
           // Save to localStorage history
           persistHistory([newHistoryItem, ...history.filter(h => h.id !== newHistoryItem.id)].slice(0, 50));
+          
+          // Asynchronously persist to Supabase if configured
+          if (isSupabaseConfigured) {
+            insertSupabaseImageHistory(newHistoryItem).catch((e) => {
+              console.warn('Failed to sync image to Supabase:', e);
+            });
+          }
+
           showToast('Image generated and saved to history!');
         };
 
         img.onload = onFinish;
         img.onerror = onFinish;
-        img.src = data.imageUrl;
-      } else {
-        throw new Error(data.error || 'Failed to generate image');
+        img.src = finalImageUrl;
       }
     } catch (err: any) {
       setError(err.message);
@@ -286,6 +353,9 @@ export function ImageStudio() {
   const getModelShortLabel = (modelVal: string): string => {
     const found = MODELS.find(m => m.value === modelVal);
     if (found) {
+      if (modelVal === 'puter-image') return 'Puter.js AI (Free)';
+      if (modelVal === 'pollinations-flux') return 'FLUX.1 (Free)';
+      if (modelVal === 'pollinations-turbo') return 'SDXL Turbo (Free)';
       if (modelVal === 'huggingface-flux') return 'FLUX.1 Schnell (HF Free)';
       if (modelVal === 'together-flux') return 'FLUX.1 Schnell (Together)';
       if (modelVal.startsWith('gemini')) return found.label.replace(/\s*\(.*\)/, '');
@@ -387,30 +457,99 @@ export function ImageStudio() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-semibold text-slate-700">Prompt</label>
-                      <button 
-                        onClick={() => setIsTipsModalOpen(true)}
-                        className="text-xs font-medium text-purple-600 hover:text-purple-800 flex items-center gap-1 transition-colors"
-                      >
-                        <Info className="w-3.5 h-3.5" />
-                        Prompt Tips
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          type="button"
+                          onClick={handleEnhancePrompt}
+                          className="text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors shadow-2xs"
+                          title="Inject anti-deformation keywords, lighting, and razor-sharp photographic details"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                          Enhance Clarity
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsTipsModalOpen(true)}
+                          className="text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          Tips
+                        </button>
+                      </div>
                     </div>
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Describe the image you want to create in vivid detail..."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:ring-2 focus:ring-purple-900/20 focus:border-purple-900 transition-all outline-none resize-none h-32 text-sm leading-relaxed"
+                      placeholder="Describe the image you want to create in vivid detail (e.g. portrait of a person, landscape, etc.)..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:ring-2 focus:ring-purple-900/20 focus:border-purple-900 transition-all outline-none resize-none h-28 text-sm leading-relaxed"
                     />
+
+                    {/* Anti-Deformation & Clarity Engine Status Banner */}
+                    <div className="mt-2 p-3 bg-gradient-to-r from-purple-50/90 to-indigo-50/90 border border-purple-200/80 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-purple-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <ShieldCheck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                            Anti-Deformation & Anatomy Shield
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                              antiDeformation ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                            }`}>
+                              {antiDeformation ? 'ACTIVE' : 'OFF'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-purple-800/80">
+                            Prevents distorted faces, extra fingers, and blurry artifacts
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextState = !antiDeformation;
+                          setAntiDeformation(nextState);
+                          if (nextState) {
+                            setNegativePrompt(DEFAULT_NEGATIVE_PROMPT);
+                            showToast('Anti-Deformation Shield active');
+                          } else {
+                            setNegativePrompt('');
+                            showToast('Anti-Deformation Shield disabled');
+                          }
+                        }}
+                        className={`w-10 h-6 rounded-full transition-colors relative focus:outline-none ${
+                          antiDeformation ? 'bg-purple-900' : 'bg-slate-300'
+                        }`}
+                        title={antiDeformation ? 'Disable anti-deformation guard' : 'Enable anti-deformation guard'}
+                      >
+                        <span className={`w-4.5 h-4.5 rounded-full bg-white block absolute top-0.75 transition-transform shadow-sm ${
+                          antiDeformation ? 'left-5' : 'left-0.75'
+                        }`} />
+                      </button>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Negative Prompt <span className="text-slate-400 font-normal">(Optional)</span></label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        Negative Prompt <span className="text-slate-400 font-normal">(Filtered terms)</span>
+                      </label>
+                      {negativePrompt !== DEFAULT_NEGATIVE_PROMPT && (
+                        <button
+                          type="button"
+                          onClick={() => setNegativePrompt(DEFAULT_NEGATIVE_PROMPT)}
+                          className="text-[11px] text-purple-700 hover:text-purple-900 font-medium"
+                        >
+                          Reset to Anti-Deform defaults
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={negativePrompt}
                       onChange={(e) => setNegativePrompt(e.target.value)}
                       placeholder="What to exclude (e.g., blurry, bad hands, distortion)"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 focus:ring-2 focus:ring-purple-900/20 focus:border-purple-900 transition-all outline-none text-sm"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-700 focus:ring-2 focus:ring-purple-900/20 focus:border-purple-900 transition-all outline-none text-xs"
                     />
                   </div>
 
@@ -538,6 +677,13 @@ export function ImageStudio() {
                       {/* Actions Overlay */}
                       <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                         <button 
+                          onClick={() => setZoomedImage(generatedImage)}
+                          className="p-3 bg-white/90 backdrop-blur border border-white/20 shadow-lg text-slate-700 rounded-xl hover:bg-white hover:text-purple-900 transition-colors"
+                          title="Inspect High-Res (Full Size)"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                        <button 
                           onClick={() => copyPromptText(prompt, 'preview')}
                           className="p-3 bg-white/90 backdrop-blur border border-white/20 shadow-lg text-slate-700 rounded-xl hover:bg-white hover:text-purple-900 transition-colors"
                           title="Copy Prompt"
@@ -587,9 +733,50 @@ export function ImageStudio() {
                           <p className="font-semibold text-red-800 text-sm">Generation Notice</p>
                           <p className="text-xs text-red-700 mt-1 leading-relaxed">{error}</p>
                           <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {model !== 'puter-flux' && (
+                              <button
+                                onClick={() => {
+                                  setModel('puter-flux');
+                                  setError(null);
+                                  showToast('Switched to Puter.js FLUX.1 (Ultra-Sharp & Free)');
+                                }}
+                                className="px-3 py-1.5 bg-purple-900 hover:bg-purple-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                                Try Puter.js FLUX.1 (Free)
+                              </button>
+                            )}
+
+                            {model !== 'puter-gpt-image' && (
+                              <button
+                                onClick={() => {
+                                  setModel('puter-gpt-image');
+                                  setError(null);
+                                  showToast('Switched to Puter GPT-Image 2 (High-Fidelity Photorealism)');
+                                }}
+                                className="px-3 py-1.5 bg-indigo-900 hover:bg-indigo-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+                                Try Puter GPT-Image 2 (Free)
+                              </button>
+                            )}
+
+                            {model !== 'pollinations-flux' && (
+                              <button
+                                onClick={() => {
+                                  setModel('pollinations-flux');
+                                  setError(null);
+                                  showToast('Switched to FLUX.1 Serverless');
+                                }}
+                                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              >
+                                Try FLUX.1 Serverless
+                              </button>
+                            )}
+
                             <button
                               onClick={() => setIsFreeCreditsModalOpen(true)}
-                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                             >
                               <Gift className="w-3.5 h-3.5" />
                               Free Credits Guide ($300 - $25k)
@@ -1090,50 +1277,95 @@ export function ImageStudio() {
               </div>
               
               <div className="p-5 overflow-y-auto space-y-5 text-sm text-slate-600">
-                {/* 1. Google Cloud $300 Free Trial */}
-                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40">
+                {/* 1. Puter.js Zero-Risk Free AI */}
+                <div className="p-4 rounded-xl border border-purple-300 bg-purple-50/70 shadow-sm">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                      <h4 className="font-bold text-slate-900 text-base">Google Cloud $300 Free Trial Credits</h4>
+                      <span className="w-6 h-6 rounded-full bg-purple-900 text-white text-xs font-bold flex items-center justify-center">1</span>
+                      <h4 className="font-bold text-slate-900 text-base">Puter.js (100% Free - Safe from Grok / xAI IP Blocks)</h4>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">$300 Free</span>
+                    <span className="text-xs font-bold px-2 py-0.5 bg-purple-200 text-purple-900 rounded-full">Safe &amp; Free</span>
+                  </div>
+                  <p className="text-slate-700 text-xs leading-relaxed">
+                    Unlike xAI / Grok, which requires paid billing and aggressively suspends accounts or blocks IP addresses when attempting free calls, <strong>Puter.js</strong> provides open AI access directly without API keys, cards, or IP blocking risks.
+                  </p>
+                  <div className="mt-2.5 p-2.5 bg-white rounded-lg border border-purple-200 text-xs text-slate-700 space-y-1 font-medium">
+                    <p>✨ <strong>Integrated in this app:</strong></p>
+                    <p>• <strong>Image Studio:</strong> Select <strong>Puter.js AI (100% Free)</strong> in the model dropdown.</p>
+                    <p>• <strong>AI Research:</strong> Use Puter.js GPT-4o-mini, Claude 3.5 Sonnet, or DeepSeek without keys.</p>
+                  </div>
+                </div>
+
+                {/* 2. Instant Zero-Account Free FLUX */}
+                <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/70 shadow-sm">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                      <h4 className="font-bold text-slate-900 text-base">FLUX.1 & SDXL Turbo (100% Free - No Account Needed!)</h4>
+                    </div>
+                    <span className="text-xs font-bold px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded-full">Ready Now</span>
+                  </div>
+                  <p className="text-slate-700 text-xs leading-relaxed">
+                    You <strong>do not need to create an account or provide any payment details</strong>! We have enabled serverless FLUX.1 Schnell and SDXL Turbo directly inside this app.
+                  </p>
+                  <div className="mt-2.5 p-2.5 bg-white rounded-lg border border-emerald-200 text-xs text-slate-700 space-y-1 font-medium">
+                    <p>✨ <strong>How to use right now:</strong></p>
+                    <p>1. In the Studio model dropdown, select <strong>FLUX.1 Schnell (100% Free - No Account Needed)</strong>.</p>
+                    <p>2. Enter your visual prompt and click <strong>Generate</strong>.</p>
+                  </div>
+                </div>
+
+                {/* 3. Google Cloud $300 Free Trial */}
+                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">3</span>
+                      <h4 className="font-bold text-slate-900 text-base">Google Cloud $300 Free Trial (Use Your Google Account)</h4>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">$300 Free</span>
                   </div>
                   <p className="text-slate-600 text-xs leading-relaxed">
-                    Google grants <strong>$300 in free credit</strong> to all new Google Cloud accounts for 90 days. Since you already have your Google account and Google Pro, you can activate this directly to unlock <strong>Gemini 3.1 Flash Image</strong> and <strong>Gemini 3 Pro Image</strong> at $0 cost!
+                    Since you already have a Google account and Google Pro, you do not need to register on a new third-party site. Activate the $300 Google Cloud credit grant directly to unlock <strong>Gemini 3.1 Flash Image</strong> with $0 out of pocket.
                   </p>
                   <div className="mt-3 flex items-center gap-2">
                     <a 
                       href="https://cloud.google.com/free" 
                       target="_blank" 
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
                       Activate $300 Google Cloud Free Trial
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-2 italic">
-                    Once activated, link your Google Cloud project billing to your AI Studio key — image generation will consume the $300 grant without charging your card.
+                </div>
+
+                {/* 4. NVIDIA & Hugging Face Status */}
+                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-amber-600 text-white text-xs font-bold flex items-center justify-center">4</span>
+                      <h4 className="font-bold text-slate-900 text-base">Hugging Face (NVIDIA Acquisition Notice)</h4>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">Sign-up Issues</span>
+                  </div>
+                  <p className="text-slate-600 text-xs leading-relaxed">
+                    NVIDIA officially announced an agreement to acquire Hugging Face for $12.9B. Due to extreme traffic surges and account migration policies, new account registrations are experiencing verification errors. <strong>You can skip Hugging Face entirely</strong> by using the built-in free FLUX.1 model above.
                   </p>
                 </div>
 
-                {/* 2. Google for Startups Cloud Program */}
+                {/* 5. Google for Startups Cloud Program */}
                 <div className="p-4 rounded-xl border border-purple-200 bg-purple-50/40">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-purple-900 text-white text-xs font-bold flex items-center justify-center">2</span>
-                      <h4 className="font-bold text-slate-900 text-base">Google for Startups Cloud Program (Up to $25k - $350k)</h4>
+                      <span className="w-6 h-6 rounded-full bg-purple-900 text-white text-xs font-bold flex items-center justify-center">5</span>
+                      <h4 className="font-bold text-slate-900 text-base">Google for Startups ($2k to $25k+ Grants)</h4>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-purple-100 text-purple-900 rounded-full">Grants up to $25,000+</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 bg-purple-100 text-purple-900 rounded-full">Grants up to $25k+</span>
                   </div>
                   <p className="text-slate-600 text-xs leading-relaxed">
-                    Google donates cloud credits to builders creating AI applications:
+                    Google donates up to $2,000 in free credits for early-stage builders (Start Tier, no venture capital needed) and up to $25,000–$350,000 for AI developers.
                   </p>
-                  <ul className="list-disc pl-5 mt-1.5 space-y-1 text-xs text-slate-600">
-                    <li><strong>Start Tier:</strong> Up to <strong>$2,000 in free credits</strong> for early-stage & bootstrapped developers (no institutional investment required).</li>
-                    <li><strong>AI / Scale Tier:</strong> Up to <strong>$25,000 to $350,000</strong> in Google Cloud & Gemini credits for AI-first applications.</li>
-                  </ul>
                   <div className="mt-3 flex items-center gap-2">
                     <a 
                       href="https://cloud.google.com/startup" 
@@ -1141,61 +1373,30 @@ export function ImageStudio() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-900 hover:bg-purple-800 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
-                      Apply at Google for Startups
+                      Apply to Google for Startups
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
                 </div>
 
-                {/* 3. Hugging Face Serverless - 100% Free */}
+                {/* 6. Together AI Free Starter Credits */}
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-slate-800 text-white text-xs font-bold flex items-center justify-center">3</span>
-                      <h4 className="font-bold text-slate-900 text-base">Hugging Face Serverless (100% Free - No Card Required)</h4>
+                      <span className="w-6 h-6 rounded-full bg-slate-700 text-white text-xs font-bold flex items-center justify-center">6</span>
+                      <h4 className="font-bold text-slate-900 text-base">Together AI ($5 Free Starter Credits)</h4>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-slate-200 text-slate-800 rounded-full">No Credit Card</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 bg-slate-200 text-slate-800 rounded-full">~1,500 Images</span>
                   </div>
                   <p className="text-slate-600 text-xs leading-relaxed">
-                    Hugging Face provides free serverless inference for open-source AI models like <strong>FLUX.1 Schnell</strong>. You only need a free user account:
-                  </p>
-                  <ol className="list-decimal pl-5 mt-1.5 space-y-1 text-xs text-slate-600">
-                    <li>Sign up for a free account at <strong>huggingface.co</strong> (no payment info asked).</li>
-                    <li>Go to <strong>Settings &gt; Access Tokens</strong> and click <strong>Create New Token</strong> (type: Read).</li>
-                    <li>In this app, open the <strong>Settings &gt; Secrets</strong> menu and paste your token under <strong>HF_TOKEN</strong>.</li>
-                    <li>Select <strong>FLUX.1 Schnell (Hugging Face)</strong> in the Studio to generate!</li>
-                  </ol>
-                  <div className="mt-3">
-                    <a 
-                      href="https://huggingface.co/settings/tokens" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                      Get Free Hugging Face Token
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* 4. Together AI Free Starter Credits */}
-                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-blue-700 text-white text-xs font-bold flex items-center justify-center">4</span>
-                      <h4 className="font-bold text-slate-900 text-base">Together AI Free Credits ($5 Free on Signup)</h4>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">~1,500 Images Free</span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    Together AI gives $5 in free credits upon signing up with email/GitHub. FLUX.1 Schnell costs only ~$0.003 per image, giving you ~1,500 photorealistic generations.
+                    Sign up with your existing GitHub account or email at <strong>api.together.ai</strong> to get $5 in free credits for FLUX.1 Schnell.
                   </p>
                   <div className="mt-3">
                     <a 
                       href="https://api.together.ai" 
                       target="_blank" 
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
                       Sign Up at Together AI
                       <ExternalLink className="w-3 h-3" />
@@ -1212,6 +1413,40 @@ export function ImageStudio() {
                   Close Guide
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+        {/* Fullscreen Lightbox Modal */}
+        {zoomedImage && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative max-w-5xl max-h-[90vh] w-full flex flex-col items-center justify-center"
+            >
+              <div className="absolute -top-12 right-0 flex items-center gap-3 text-white">
+                <button
+                  onClick={() => handleDownload(zoomedImage, prompt)}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+                <button
+                  onClick={() => setZoomedImage(null)}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white transition-colors"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <img 
+                src={zoomedImage} 
+                alt="High-Res Inspection" 
+                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/10" 
+              />
             </motion.div>
           </div>
         )}
