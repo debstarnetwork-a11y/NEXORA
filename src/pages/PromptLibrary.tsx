@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Search, Copy, Heart, Plus } from 'lucide-react';
 import { useAppStore } from '../store';
 import { PromptTemplate } from '../types';
+import { PortalExitButton } from '../components/PortalExitButton';
 
 const CATEGORIES = [
   'All', 'Product Photography', 'YouTube Thumbnails', 'Movie Posters', 
@@ -76,9 +77,12 @@ export function PromptLibrary() {
   return (
     <div className="h-full flex flex-col max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Prompt Library</h2>
-          <p className="text-slate-500 mt-1">Discover and use curated AI prompts</p>
+        <div className="flex items-center gap-4">
+          <PortalExitButton portalName="Prompt Library" />
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Prompt Library</h2>
+            <p className="text-slate-500 mt-1">Discover and use curated AI prompts</p>
+          </div>
         </div>
         <div className="relative w-full md:w-80 shrink-0">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />

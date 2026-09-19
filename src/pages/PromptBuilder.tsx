@@ -3,6 +3,7 @@ import { Copy, Sparkles, CheckCircle2, ChevronRight, Mic, MicOff } from 'lucide-
 import { motion } from 'motion/react';
 import { useAppStore } from '../store';
 import { useSpeech } from '../hooks/useSpeech';
+import { PortalExitButton } from '../components/PortalExitButton';
 
 const SECTIONS = [
   { id: 'subject', label: 'Subject', placeholder: 'e.g., A cybernetic samurai', icon: '👤' },
@@ -100,9 +101,12 @@ export function PromptBuilder() {
   return (
     <div className="h-full flex flex-col max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Prompt Builder</h2>
-          <p className="text-slate-500 mt-1">Structurally design the perfect prompt</p>
+        <div className="flex items-center gap-4">
+          <PortalExitButton portalName="Prompt Builder" />
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Prompt Builder</h2>
+            <p className="text-slate-500 mt-1">Structurally design the perfect prompt</p>
+          </div>
         </div>
         <button onClick={clearAll} className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
           Clear All
@@ -145,6 +149,29 @@ export function PromptBuilder() {
                   </button>
                 )}
               </div>
+              {section.id === 'style' && (
+                <div className="mt-2.5 flex flex-wrap gap-1">
+                  {[
+                    'Nexora Pixar 3D',
+                    'Nexora Hand-Sketch',
+                    'Nexora Watercolor Artistry',
+                    'Nexora Cyberpunk Neon',
+                    'Nexora Oil Painting Masterpiece',
+                    'Nexora Claymation',
+                    'Nexora 3D Papercraft',
+                    'Nexora Architectural Concept',
+                  ].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => handleFieldChange('style', s)}
+                      className="px-2 py-0.5 text-[10px] font-medium bg-purple-50 hover:bg-purple-100 text-purple-900 rounded-md border border-purple-200 transition-colors cursor-pointer"
+                    >
+                      {s.replace('Nexora ', '')}
+                    </button>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>

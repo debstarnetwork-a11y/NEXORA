@@ -20,55 +20,113 @@ import {
   ArrowRight, 
   SlidersHorizontal, 
   ChevronRight, 
-  Gift, 
-  ExternalLink, 
   HelpCircle,
   Database,
-  ShieldCheck
+  ShieldCheck,
+  Upload,
+  Maximize2,
+  Mic
 } from 'lucide-react';
 import { useAppStore } from '../store';
-import { ImageHistoryItem } from '../types';
+import { ImageHistoryItem, ImageEditMode, CharacterAnalysis } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { insertSupabaseImageHistory, fetchSupabaseImageHistory, isSupabaseConfigured } from '../lib/supabase';
 import { puterGenerateImage } from '../lib/puter';
+import { enhancePromptWithAI } from '../lib/promptEnhancer';
+import { upscaleImage } from '../lib/upscaler';
+import { VoicePromptButton } from '../components/VoicePromptButton';
+import { ImageEditControls } from '../components/ImageEditControls';
+import { PortalExitButton } from '../components/PortalExitButton';
+import { 
+  loadHistoryFromStorage, 
+  persistHistoryToStorage, 
+  deleteHistoryItemFromStorage, 
+  clearAllHistoryFromStorage 
+} from '../lib/imageStorage';
 
-const STORAGE_KEY = 'nexora_image_studio_history';
-
-const DEFAULT_NEGATIVE_PROMPT = 'blurry, out of focus, low quality, deformed hands, extra fingers, missing fingers, mutated hands, bad anatomy, bad eyes, crossed eyes, disfigured, distorted face, low resolution, ugly, artifacts, watermark';
+const DEFAULT_NEGATIVE_PROMPT = 'split screen, side by side, two in one, comparison, before and after, diptych, triptych, collage, grid, multiple panels, dual image, split view, multiple angles, photo grid, collage frame, border divider, two people comparison, blurry, out of focus, low quality, deformed hands, extra fingers, missing fingers, mutated hands, bad anatomy, bad eyes, crossed eyes, disfigured, distorted face, low resolution, ugly, artifacts, watermark';
 
 const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4'];
 const QUALITIES = ['1K (High-Definition)', '2K (Ultra-Sharp)', '4K (Maximum Crisp)'];
 const MODELS = [
-  { label: 'Puter.js: FLUX.1 Schnell (Ultra-Sharp - 100% Free)', value: 'puter-flux' },
-  { label: 'Puter.js: GPT-Image 2 (High-Fidelity Photorealism - Free)', value: 'puter-gpt-image' },
-  { label: 'Puter.js: AI General (Free Auto-Select)', value: 'puter-image' },
-  { label: 'FLUX.1 High-Definition (100% Free - Serverless)', value: 'pollinations-flux' },
-  { label: 'Gemini 3.1 Flash Image (Google Cloud Credits)', value: 'gemini-3.1-flash-image' },
-  { label: 'Gemini 3 Pro Image (Google Cloud Credits)', value: 'gemini-3-pro-image' },
-  { label: 'Flux.1 Schnell (Together AI - Free Trial)', value: 'together-flux' },
-  { label: 'FLUX.1 Schnell (Hugging Face - Free Token)', value: 'huggingface-flux' },
-  { label: 'Flux.1 [dev] (Replicate)', value: 'replicate-flux-dev' }
+  { label: 'Gemini 3.1 Flash Image', value: 'gemini-3.1-flash-image' },
+  { label: 'Gemini 3 Pro Image', value: 'gemini-3-pro-image' },
+  { label: 'FLUX.1 Schnell (Ultra-Sharp)', value: 'puter-flux' },
+  { label: 'GPT-Image 2 (Photorealistic)', value: 'puter-gpt-image' },
+  { label: 'FLUX.1 High-Definition (Serverless)', value: 'pollinations-flux' },
+  { label: 'FLUX.1 Schnell (Together AI)', value: 'together-flux' },
+  { label: 'FLUX.1 Schnell (Hugging Face)', value: 'huggingface-flux' },
+  { label: 'FLUX.1 [dev] (Replicate)', value: 'replicate-flux-dev' },
+  { label: 'AI Vision General', value: 'puter-image' }
 ];
 
 const STYLES = [
   { label: 'Nexora Vision Pro (Photorealistic Masterpiece)', value: 'Nexora Vision Pro' },
+  { label: 'Nexora Pixar 3D (Disney Pixar 3D Animation)', value: 'Nexora Pixar 3D' },
+  { label: 'Nexora Hand-Sketch (Pencil & Charcoal Sketchbook)', value: 'Nexora Hand-Sketch' },
   { label: 'Nexora Studio XL (Hasselblad Studio 100MP)', value: 'Nexora Studio XL' },
   { label: 'Nexora Cinematic (35mm Anamorphic Film)', value: 'Nexora Cinematic' },
+  { label: 'Nexora Watercolor Artistry (Fluid Pigment & Paper)', value: 'Nexora Watercolor Artistry' },
+  { label: 'Nexora Cyberpunk Neon (Futuristic Sci-Fi Glow)', value: 'Nexora Cyberpunk Neon' },
+  { label: 'Nexora Oil Painting Masterpiece (Impasto Canvas)', value: 'Nexora Oil Painting Masterpiece' },
+  { label: 'Nexora Claymation (Tactile Stop-Motion Clay)', value: 'Nexora Claymation' },
+  { label: 'Nexora 3D Papercraft (Layered Origami Sculpture)', value: 'Nexora 3D Papercraft' },
+  { label: 'Nexora Architectural Concept (Modernist Structure)', value: 'Nexora Architectural Concept' },
+  { label: 'Nexora Film Noir (Vintage Dramatic Shadows)', value: 'Nexora Film Noir' },
+  { label: 'Nexora Polaroid (Retro Instant Film Grain)', value: 'Nexora Polaroid' },
+  { label: 'Nexora Animate Cartoon (Vibrant 2D/3D Animation)', value: 'Nexora Animate Cartoon' },
+  { label: 'Nexora Stick Cartoon (Minimalist Line Doodle)', value: 'Nexora Stick Cartoon' },
   { label: 'Nexora Digital Art (Sharp Concept Illustration)', value: 'Nexora Digital Art' },
   { label: 'Nexora Anime High-Res (Makoto Shinkai Crisp)', value: 'Nexora Anime High-Res' },
-  { label: 'Nexora Vision Fast (Crisp Dynamic)', value: 'Nexora Vision Fast' }
+  { label: 'Nexora Vision Fast (Crisp Dynamic)', value: 'Nexora Vision Fast' },
+  { label: 'Nexora Vision Lite (Clean Fast Rendering)', value: 'Nexora Vision Lite' }
 ];
 
-// Helper to safely load initial history from localStorage
-const loadStoredHistory = (): ImageHistoryItem[] => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error('Failed to load image history from localStorage:', e);
-    return [];
+const getStylePromptModifier = (styleName: string, antiDef: boolean = true): string => {
+  switch (styleName) {
+    case 'Nexora Vision Pro':
+      return ', single unified frame, photorealistic masterpiece, 8k uhd, razor-sharp focus, symmetrical facial features, accurate anatomy, natural skin pores, cinematic volumetric lighting, no split screen, no side by side';
+    case 'Nexora Pixar 3D':
+      return ', single unified character frame, iconic Disney Pixar 3D animation style, adorable expressive character design, soft subsurface skin scattering, large soulful expressive eyes, smooth 3D CGI rendering, charming lighting, RenderMan quality, vibrant rich color palette, no split screen, no side by side, no comparison';
+    case 'Nexora Hand-Sketch':
+      return ', single unified frame, authentic hand-drawn graphite pencil sketch, delicate charcoal shading, fine cross-hatching line art, textured vintage sketchbook paper grain, artist pencil drawing illustration, hand-sketched masterpiece, no split screen, no side by side';
+    case 'Nexora Watercolor Artistry':
+      return ', single unified frame, ethereal watercolor painting, fluid translucent color washes, wet-on-wet paint bleeds, visible rough cold-press watercolor paper texture, delicate ink linework accents, fine art watercolor illustration, no split screen, no side by side';
+    case 'Nexora Cyberpunk Neon':
+      return ', single unified frame, futuristic cyberpunk aesthetic, high-tech neon lighting, glowing holographic reflections, rain-slicked dark cyber metropolis, vivid magenta and cyan backlight, detailed futuristic cyber gear, cinematic atmosphere, no split screen, no side by side';
+    case 'Nexora Oil Painting Masterpiece':
+      return ', single unified frame, classical oil painting on canvas, thick impasto palette knife textures, rich buttery paint strokes, Rembrandt chiaroscuro lighting, deep luminous colors, museum fine art masterpiece, no split screen, no side by side';
+    case 'Nexora Claymation':
+      return ', single unified frame, handcrafted claymation aesthetic, tactile plasticine clay character modeling, charming stop-motion animation look, studio macro lighting, subtle artisan clay fingerprint textures, miniature diorama setting, no split screen, no side by side';
+    case 'Nexora 3D Papercraft':
+      return ', single unified frame, intricate layered papercraft art, 3D folded origami sculpture, delicate multi-layered paper cutouts, depth shadowbox lighting, clean geometric paper folds, tactile craft paper textures, no split screen, no side by side';
+    case 'Nexora Architectural Concept':
+      return ', single unified frame, clean modernist architectural visualization, precise structural lines, warm natural ambient daylight, minimalist spatial composition, photorealistic building materials and glass reflections, no split screen, no side by side';
+    case 'Nexora Studio XL':
+      return ', single unified frame, professional studio photography, medium format 100MP camera, sharp focal plane, perfect lighting, crisp textures, ultra-detailed, no split screen, no side by side';
+    case 'Nexora Cinematic':
+      return ', single unified frame, 35mm anamorphic movie still, cinematic film grading, crystal clear focal point, 8k resolution, photorealism, high dynamic range, no split screen, no side by side';
+    case 'Nexora Film Noir':
+      return ', single unified frame, classic 1940s film noir style, dramatic black and white chiaroscuro lighting, deep mysterious shadows, moody venetian blind highlights, vintage 35mm monochrome film grain, atmospheric cinematic composition, no split screen, no side by side';
+    case 'Nexora Polaroid':
+      return ', single unified frame, vintage polaroid 600 instant photograph, authentic analog color grading, soft flash illumination, warm faded nostalgic tones, subtle chemical light leak, 1980s retro snapshot aesthetic, no split screen, no side by side';
+    case 'Nexora Animate Cartoon':
+      return ', single character, single unified image, vibrant animated cartoon style, playful whimsical character illustration, crisp clean outlines, expressive dynamic poses, smooth cel shading, colorful animated feature film aesthetic, no split screen, no side by side, no comparison, no collage';
+    case 'Nexora Stick Cartoon':
+      return ', single isolated character, single unified frame, pure minimalist stick figure cartoon drawing, simple black stick figure line art, clean expressive doodle illustration, solid plain white background, humorous hand-drawn comic style, uncluttered vector lines, single panel only, no real photograph, no side by side comparison, no split screen, no two images, no collage';
+    case 'Nexora Digital Art':
+      return ', single unified frame, high-end digital concept art, sharp detailed lines, vibrant atmospheric lighting, intricate details, trending on artstation, no split screen, no side by side';
+    case 'Nexora Anime High-Res':
+      return ', single unified frame, Makoto Shinkai anime aesthetic, high-resolution modern anime illustration, lush detailed backgrounds, gorgeous sky and cloud lighting, clean anime cel shading, vibrant colors, no split screen, no side by side';
+    case 'Nexora Vision Fast':
+      return ', single unified frame, highly detailed, sharp focus, dynamic composition, 8k resolution, clear lighting, no split screen, no side by side';
+    case 'Nexora Vision Lite':
+      return ', single unified frame, clean and crisp digital rendering, natural balanced daylight, sharp lines, light uncluttered composition, smooth textures, no split screen, no side by side';
+    default:
+      if (antiDef) {
+        return ', single unified frame, ultra-sharp focus, pristine 8k resolution, symmetrical face, clear eyes, anatomically correct hands and fingers, highly detailed texture, professional photography, no split screen, no side by side';
+      }
+      return ', single unified frame, no split screen, no side by side';
   }
 };
 
@@ -77,21 +135,33 @@ export function ImageStudio() {
   const [negativePrompt, setNegativePrompt] = useState(DEFAULT_NEGATIVE_PROMPT);
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [quality, setQuality] = useState('1K (High-Definition)');
-  const [model, setModel] = useState('puter-flux');
+  const [model, setModel] = useState('gemini-3.1-flash-image');
   const [style, setStyle] = useState('Nexora Vision Pro');
   const [antiDeformation, setAntiDeformation] = useState(true);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
   const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
-  const [isFreeCreditsModalOpen, setIsFreeCreditsModalOpen] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  // Local Storage Image History State
-  const [history, setHistory] = useState<ImageHistoryItem[]>(loadStoredHistory);
+  // Image-to-Image, Editing, Face Lock & Upscaling State
+  const [generationMode, setGenerationMode] = useState<'text2img' | 'img2img'>('text2img');
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState<ImageEditMode>('background_change');
+  const [faceLock, setFaceLock] = useState(true);
+  const [lockComplexion, setLockComplexion] = useState(true);
+  const [complexionText, setComplexionText] = useState('Maintain exact skin tone, natural undertones, and facial structure from reference photo');
+  const [lockAttire, setLockAttire] = useState(true);
+  const [attireText, setAttireText] = useState('Maintain 100% exact identical attire, garments, fabric colors, and outfit from reference image without alteration');
+  const [characterProfile, setCharacterProfile] = useState<CharacterAnalysis | null>(null);
+  const [isUpscaling, setIsUpscaling] = useState(false);
+
+  // IndexedDB Image History State (unlimited quota, no 5MB localStorage crashes)
+  const [history, setHistory] = useState<ImageHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'studio' | 'history'>('studio');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeHistoryItem, setActiveHistoryItem] = useState<ImageHistoryItem | null>(null);
@@ -101,6 +171,13 @@ export function ImageStudio() {
 
   const { saveImage } = useAppStore();
 
+  useEffect(() => {
+    if (referenceImage && model.startsWith('gemini')) {
+      setModel('puter-flux');
+      setWarning('Switched to FLUX.1 model because Gemini does not support Image-to-Image editing.');
+    }
+  }, [referenceImage, model]);
+
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => {
@@ -108,35 +185,98 @@ export function ImageStudio() {
     }, 2800);
   };
 
-  const handleEnhancePrompt = () => {
-    if (!prompt.trim()) {
+  const handleLoadForEdit = (imageUrl: string, initialPrompt?: string) => {
+    setReferenceImage(imageUrl);
+    setGenerationMode('img2img');
+    setActiveTab('studio');
+    setFaceLock(true);
+    setLockComplexion(true);
+    setLockAttire(true);
+    setCharacterProfile(null);
+    if (initialPrompt && initialPrompt.trim()) {
+      setPrompt(initialPrompt);
+    }
+    showToast('Loaded into Edit Studio! Locking biometric facial features & attire...');
+  };
+
+  const handleTriggerUpscale = async (factor: 2 | 4, mode: 'balanced' | 'face_revamp' | 'ultra_sharp') => {
+    const targetImage = referenceImage || generatedImage;
+    if (!targetImage) {
+      showToast('Please upload or select an image to upscale.');
+      return;
+    }
+    setIsUpscaling(true);
+    try {
+      showToast(`Upscaling image ${factor}X with ${mode === 'face_revamp' ? 'Face Clarity Revamp' : 'Super-Resolution'}...`);
+      const result = await upscaleImage(targetImage, { factor, mode });
+
+      const upscaledItem: ImageHistoryItem = {
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        imageUrl: result.dataUrl,
+        prompt: prompt ? `[${factor}X Upscaled & Face Revamped] ${prompt}` : `[${factor}X Super-Resolution Upscaled Image]`,
+        aspectRatio: `${result.upscaledWidth}:${result.upscaledHeight}`,
+        quality: factor === 4 ? '4K (Maximum Crisp)' : '2K (Ultra-Sharp)',
+        model: 'Nexora Super-Resolution Engine',
+        style: 'Ultra-HD Revamp',
+        timestamp: Date.now(),
+        referenceImageUrl: targetImage,
+        isUpscaled: true
+      };
+
+      setGeneratedImage(result.dataUrl);
+      setActiveHistoryItem(upscaledItem);
+      persistHistory([upscaledItem, ...history.filter(h => h.id !== upscaledItem.id)].slice(0, 50));
+      showToast(`Successfully upscaled to ${result.upscaledWidth}×${result.upscaledHeight} in ${result.durationMs}ms!`);
+    } catch (err: any) {
+      console.error('Upscale error:', err);
+      showToast(`Upscaling failed: ${err.message}`);
+    } finally {
+      setIsUpscaling(false);
+    }
+  };
+
+  const handleEnhancePrompt = async () => {
+    if (!prompt.trim() || isEnhancingPrompt) {
       showToast('Type a prompt description first to enhance it!');
       return;
     }
-    const base = prompt.trim().replace(/,\s*(masterpiece|8k|sharp focus|ultra-detailed|photorealistic).*$/i, '');
-    const enhanced = `${base}, masterpiece photograph, 8k resolution, razor-sharp focus, symmetrical clear eyes, anatomically correct hands and fingers, smooth natural skin texture, professional cinematic lighting, crisp fine details`;
-    setPrompt(enhanced);
-    showToast('Prompt upgraded with Anti-Deformation & Sharpness filters!');
-  };
-
-  // Persist updated history to localStorage safely
-  const persistHistory = (updatedHistory: ImageHistoryItem[]) => {
-    setHistory(updatedHistory);
+    setIsEnhancingPrompt(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
-    } catch (err) {
-      console.warn('LocalStorage quota limit reached, trimming older history items:', err);
-      try {
-        const trimmed = updatedHistory.slice(0, 20);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
-      } catch (inner) {
-        console.error('Could not persist image history to localStorage:', inner);
+      showToast('Enhancing prompt with cinematic composition and lighting...');
+      const enhanced = await enhancePromptWithAI(prompt, style);
+      if (enhanced) {
+        setPrompt(enhanced);
+        showToast('Prompt expanded with studio-grade details!');
       }
+    } catch (err) {
+      console.warn('Enhancement failed:', err);
+      // Fallback manual enhancement
+      const base = prompt.trim().replace(/,\s*(masterpiece|8k|sharp focus|ultra-detailed|photorealistic).*$/i, '');
+      setPrompt(`${base}, masterpiece photograph, 8k resolution, razor-sharp focus, symmetrical clear eyes, anatomically correct hands, cinematic lighting, crisp details`);
+      showToast('Prompt upgraded with high-detail filters!');
+    } finally {
+      setIsEnhancingPrompt(false);
     }
   };
 
-  // Sync from Supabase on component mount if configured
+  // Persist updated history asynchronously to IndexedDB (safe from quota errors)
+  const persistHistory = (updatedHistory: ImageHistoryItem[]) => {
+    setHistory(updatedHistory);
+    persistHistoryToStorage(updatedHistory).catch((err) => {
+      console.warn('Failed to persist history to local storage:', err);
+    });
+  };
+
+  // Load history from IndexedDB and sync from Supabase on component mount
   useEffect(() => {
+    loadHistoryFromStorage().then((storedItems) => {
+      if (storedItems && storedItems.length > 0) {
+        setHistory(storedItems);
+      }
+    }).catch((err) => {
+      console.warn('Initial history load warning:', err);
+    });
+
     if (isSupabaseConfigured) {
       fetchSupabaseImageHistory().then((cloudItems) => {
         if (cloudItems && cloudItems.length > 0) {
@@ -144,9 +284,13 @@ export function ImageStudio() {
             const existingIds = new Set(prev.map((p) => p.id));
             const toAdd = cloudItems.filter((c) => !existingIds.has(c.id));
             if (toAdd.length === 0) return prev;
-            return [...toAdd, ...prev].slice(0, 50);
+            const merged = [...toAdd, ...prev].slice(0, 100);
+            persistHistoryToStorage(merged);
+            return merged;
           });
         }
+      }).catch((err) => {
+        console.warn('Supabase cloud history load notice:', err);
       });
     }
   }, []);
@@ -165,22 +309,64 @@ export function ImageStudio() {
     const currentModel = model;
     const currentStyle = style;
 
-    try {
-      let finalImageUrl = '';
+    // Ensure biometric identity analysis is available before starting generation
+    let activeProfile = characterProfile;
+    if (referenceImage && (!activeProfile || !activeProfile.strictPreservationPrompt)) {
+      showToast('Locking character biometric identity & facial features...');
+      try {
+        const res = await fetch('/api/analyze-character', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: referenceImage })
+        });
+        if (res.ok) {
+          const profile = await res.json();
+          setCharacterProfile(profile);
+          activeProfile = profile;
+          if (profile.ethnicityAndComplexion && (!complexionText || complexionText.includes('Maintain exact'))) {
+            setComplexionText(profile.ethnicityAndComplexion);
+          }
+          if (profile.attireDescription && (!attireText || attireText.includes('Maintain 100%'))) {
+            setAttireText(profile.attireDescription);
+          }
+        }
+      } catch (err) {
+        console.warn('Pre-generation biometric scan error:', err);
+      }
+    }
 
-      if (currentModel.startsWith('puter-')) {
+    const tryGenerate = async (targetModel: string): Promise<string> => {
+      const resolvedComplexion = (lockComplexion && activeProfile?.ethnicityAndComplexion && (!complexionText || complexionText.includes('Maintain exact')))
+        ? activeProfile.ethnicityAndComplexion
+        : complexionText;
+
+      const resolvedAttire = (lockAttire && activeProfile?.attireDescription && (!attireText || attireText.includes('Maintain 100%')))
+        ? activeProfile.attireDescription
+        : attireText;
+
+      if (targetModel.startsWith('puter-')) {
         let puterModel = 'black-forest-labs/flux-schnell';
-        if (currentModel === 'puter-gpt-image') puterModel = 'openai/gpt-image-2';
-        else if (currentModel === 'puter-flux') puterModel = 'black-forest-labs/flux-schnell';
+        if (targetModel === 'puter-flux') puterModel = 'black-forest-labs/flux-schnell';
+        else if (targetModel === 'puter-gpt-image') puterModel = 'black-forest-labs/flux-schnell';
 
-        const styleModifier = currentStyle && currentStyle !== 'Nexora Vision Pro' ? `, style of ${currentStyle}` : '';
-        const enhancedPrompt = `${currentPrompt}${styleModifier}`;
+        const styleModifier = getStylePromptModifier(currentStyle, antiDeformation);
 
-        finalImageUrl = await puterGenerateImage(enhancedPrompt, {
+        return await puterGenerateImage(currentPrompt, {
           model: puterModel,
           aspectRatio: currentAspectRatio,
           quality: currentQuality,
-          antiDeformation: antiDeformation
+          antiDeformation: antiDeformation,
+          referenceImage: referenceImage || null,
+          editMode: referenceImage ? editMode : null,
+          faceLock: faceLock,
+          lockComplexion: lockComplexion,
+          complexionLock: resolvedComplexion,
+          lockAttire: lockAttire,
+          attireLock: resolvedAttire,
+          facialFeatures: activeProfile?.facialFeatures,
+          hairStyle: activeProfile?.hairStyle,
+          strictPreservationPrompt: activeProfile?.strictPreservationPrompt,
+          styleModifier
         });
       } else {
         const response = await fetch('/api/generate-image', {
@@ -191,19 +377,65 @@ export function ImageStudio() {
             negativePrompt: currentNegativePrompt || (antiDeformation ? DEFAULT_NEGATIVE_PROMPT : ''), 
             aspectRatio: currentAspectRatio, 
             quality: currentQuality, 
-            model: currentModel, 
+            model: targetModel, 
             style: currentStyle,
-            antiDeformation: antiDeformation
+            antiDeformation: antiDeformation,
+            referenceImage: referenceImage || null,
+            editMode: referenceImage ? editMode : null,
+            faceLock: faceLock,
+            lockComplexion: lockComplexion,
+            complexionLock: resolvedComplexion,
+            lockAttire: lockAttire,
+            attireLock: resolvedAttire,
+            facialFeatures: activeProfile?.facialFeatures,
+            hairStyle: activeProfile?.hairStyle,
+            strictPreservationPrompt: activeProfile?.strictPreservationPrompt
           })
         });
 
         const data = await response.json();
         if (response.ok && data.imageUrl) {
-          finalImageUrl = data.imageUrl;
           if (data.warning) setWarning(data.warning);
+          return data.imageUrl;
         } else {
           throw new Error(data.error || 'Failed to generate image');
         }
+      }
+    };
+
+    try {
+      // Build priority fallback chain based on selected model
+      const reliableEngines = referenceImage
+        ? ['puter-flux', 'pollinations-flux', 'pollinations-turbo', 'puter-gpt-image']
+        : ['puter-flux', 'pollinations-flux', 'pollinations-turbo', 'puter-gpt-image'];
+      const executionChain = [currentModel, ...reliableEngines.filter(m => m !== currentModel)];
+
+      let finalImageUrl = '';
+      let usedModel = currentModel;
+      let lastError: any = null;
+
+      for (let i = 0; i < executionChain.length; i++) {
+        const candidateModel = executionChain[i];
+        try {
+          if (i > 0) {
+            showToast(`Connecting to backup engine (${getModelShortLabel(candidateModel)})...`);
+          }
+          finalImageUrl = await tryGenerate(candidateModel);
+          if (finalImageUrl) {
+            usedModel = candidateModel;
+            if (i > 0) {
+              setWarning(`Switched to backup engine (${getModelShortLabel(candidateModel)}) to fulfill request.`);
+            }
+            break;
+          }
+        } catch (err: any) {
+          console.warn(`Engine ${candidateModel} failed:`, err);
+          lastError = err;
+        }
+      }
+
+      if (!finalImageUrl) {
+        throw lastError || new Error('All image engines are currently busy. Please try again in a moment.');
       }
 
       if (finalImageUrl) {
@@ -216,9 +448,16 @@ export function ImageStudio() {
           negativePrompt: currentNegativePrompt || undefined,
           aspectRatio: currentAspectRatio,
           quality: currentQuality,
-          model: currentModel,
+          model: usedModel,
           style: currentStyle,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          referenceImageUrl: referenceImage || undefined,
+          editMode: referenceImage ? editMode : undefined,
+          faceLock: referenceImage ? faceLock : undefined,
+          lockComplexion: referenceImage ? lockComplexion : undefined,
+          complexionLock: referenceImage && lockComplexion ? complexionText : undefined,
+          lockAttire: referenceImage ? lockAttire : undefined,
+          attireLock: referenceImage && lockAttire ? attireText : undefined
         };
 
         // Pre-load the image so it doesn't show blank/broken while downloading
@@ -244,7 +483,11 @@ export function ImageStudio() {
 
         img.onload = onFinish;
         img.onerror = onFinish;
-        img.src = finalImageUrl;
+        if (finalImageUrl && finalImageUrl.trim() !== '') {
+          img.src = finalImageUrl;
+        } else {
+          onFinish();
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -265,20 +508,38 @@ export function ImageStudio() {
 
   const handleDownload = async (imageUrl: string, promptText?: string) => {
     try {
-      const res = await fetch(imageUrl);
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+      showToast('Preparing download...');
+      
+      let downloadUrl = imageUrl;
+      let isObjectUrl = false;
+      
+      if (!imageUrl.startsWith('data:')) {
+        const res = await fetch(imageUrl);
+        const blob = await res.blob();
+        downloadUrl = window.URL.createObjectURL(blob);
+        isObjectUrl = true;
+      }
+      
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadUrl;
       a.download = `nexora-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      if (isObjectUrl) {
+        window.URL.revokeObjectURL(downloadUrl);
+      }
       showToast('Image download started');
     } catch (e) {
       console.error('Failed to download directly:', e);
-      window.open(imageUrl, '_blank');
+      const a = document.createElement('a');
+      a.href = imageUrl;
+      a.download = `nexora-${Date.now()}.png`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
@@ -308,6 +569,7 @@ export function ImageStudio() {
     if (e) e.stopPropagation();
     const filtered = history.filter(item => item.id !== id);
     persistHistory(filtered);
+    deleteHistoryItemFromStorage(id);
     if (activeHistoryItem?.id === id) {
       setActiveHistoryItem(null);
     }
@@ -316,9 +578,10 @@ export function ImageStudio() {
 
   const handleClearAllHistory = () => {
     persistHistory([]);
+    clearAllHistoryFromStorage();
     setActiveHistoryItem(null);
     setIsClearModalOpen(false);
-    showToast('Local generation history cleared');
+    showToast('Generation history cleared');
   };
 
   // Filtered history list based on search query
@@ -353,11 +616,11 @@ export function ImageStudio() {
   const getModelShortLabel = (modelVal: string): string => {
     const found = MODELS.find(m => m.value === modelVal);
     if (found) {
-      if (modelVal === 'puter-image') return 'Puter.js AI (Free)';
-      if (modelVal === 'pollinations-flux') return 'FLUX.1 (Free)';
-      if (modelVal === 'pollinations-turbo') return 'SDXL Turbo (Free)';
-      if (modelVal === 'huggingface-flux') return 'FLUX.1 Schnell (HF Free)';
-      if (modelVal === 'together-flux') return 'FLUX.1 Schnell (Together)';
+      if (modelVal === 'puter-image') return 'AI Vision General';
+      if (modelVal === 'pollinations-flux') return 'FLUX.1 HD';
+      if (modelVal === 'pollinations-turbo') return 'SDXL Turbo';
+      if (modelVal === 'huggingface-flux') return 'FLUX.1 (HF)';
+      if (modelVal === 'together-flux') return 'FLUX.1 (Together)';
       if (modelVal.startsWith('gemini')) return found.label.replace(/\s*\(.*\)/, '');
       return found.label.split(' - ')[0];
     }
@@ -368,25 +631,19 @@ export function ImageStudio() {
     <div className="h-full flex flex-col max-w-6xl mx-auto w-full p-4 sm:p-6 lg:p-8 overflow-y-auto relative">
       {/* Header with Navigation Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            Image Studio
-          </h2>
-          <p className="text-slate-500 mt-1">
-            Create high-fidelity visuals • Prompts and results automatically saved locally
-          </p>
+        <div className="flex items-center gap-4">
+          <PortalExitButton portalName="Image Studio" />
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              Image Studio
+            </h2>
+            <p className="text-slate-500 mt-1">
+              Create high-fidelity visuals • Prompts and results automatically saved locally
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setIsFreeCreditsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl text-xs font-semibold transition-colors shadow-sm"
-            title="Learn how to get $300 to $25k in free AI API credits"
-          >
-            <Gift className="w-3.5 h-3.5 text-emerald-600" />
-            Free Credits Guide
-          </button>
-
           {/* View Switcher: Studio vs History */}
           <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-xl w-fit">
             <button
@@ -430,6 +687,62 @@ export function ImageStudio() {
             <div className="lg:col-span-5 space-y-6">
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="space-y-5">
+
+                  {/* Mode Selector: Text-to-Image vs Edit / Img2Img & Upscale */}
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
+                    <button
+                      type="button"
+                      onClick={() => setGenerationMode('text2img')}
+                      className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        generationMode === 'text2img' && !referenceImage
+                          ? 'bg-white text-purple-950 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Wand2 className="w-3.5 h-3.5 text-purple-700" />
+                      Text to Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setGenerationMode('img2img')}
+                      className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        generationMode === 'img2img' || referenceImage
+                          ? 'bg-white text-purple-950 shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-purple-700" />
+                      Edit & Upscale (Img2Img)
+                      {referenceImage && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Dedicated Image-to-Image, Editing & Upscaling Panel */}
+                  {(generationMode === 'img2img' || referenceImage) && (
+                    <ImageEditControls
+                      referenceImage={referenceImage}
+                      onReferenceImageChange={setReferenceImage}
+                      editMode={editMode}
+                      onEditModeChange={setEditMode}
+                      faceLock={faceLock}
+                      onFaceLockChange={setFaceLock}
+                      lockComplexion={lockComplexion}
+                      onLockComplexionChange={setLockComplexion}
+                      complexionText={complexionText}
+                      onComplexionTextChange={setComplexionText}
+                      lockAttire={lockAttire}
+                      onLockAttireChange={setLockAttire}
+                      attireText={attireText}
+                      onAttireTextChange={setAttireText}
+                      onPromptSelect={(presetPrompt) => setPrompt(presetPrompt)}
+                      onTriggerUpscale={handleTriggerUpscale}
+                      isUpscaling={isUpscaling}
+                      onNotice={showToast}
+                      onAnalysisComplete={setCharacterProfile}
+                    />
+                  )}
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -454,23 +767,85 @@ export function ImageStudio() {
                     </div>
                   </div>
 
+                  {referenceImage && model.startsWith('gemini') && (
+                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs flex gap-2 items-start">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span className="leading-relaxed font-medium">
+                        Gemini models do not support structural Image-to-Image editing. It will generate a new image based on your prompt, ignoring the visual structure of your reference image. To preserve the character or scene layout, please select <span className="font-bold text-amber-900">FLUX.1 Schnell (Ultra-Sharp)</span> or <span className="font-bold text-amber-900">FLUX.1 [dev] (Replicate)</span> instead.
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Quick Style Chips */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+                    <span className="text-[11px] font-semibold text-slate-400 shrink-0">Popular:</span>
+                    {[
+                      { label: '🌟 Pixar 3D', val: 'Nexora Pixar 3D' },
+                      { label: '✏️ Hand-Sketch', val: 'Nexora Hand-Sketch' },
+                      { label: '💧 Watercolor', val: 'Nexora Watercolor Artistry' },
+                      { label: '⚡ Cyberpunk', val: 'Nexora Cyberpunk Neon' },
+                      { label: '🎨 Oil Painting', val: 'Nexora Oil Painting Masterpiece' },
+                      { label: '🧱 Claymation', val: 'Nexora Claymation' },
+                      { label: '📐 Architecture', val: 'Nexora Architectural Concept' },
+                      { label: '📸 Vision Pro', val: 'Nexora Vision Pro' },
+                      { label: '🎬 Cinematic', val: 'Nexora Cinematic' },
+                      { label: '🌸 Anime', val: 'Nexora Anime High-Res' },
+                    ].map((chip) => (
+                      <button
+                        key={chip.val}
+                        type="button"
+                        onClick={() => {
+                          setStyle(chip.val);
+                          showToast(`Style set to: ${chip.val}`);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg font-medium text-[11px] shrink-0 transition-all cursor-pointer ${
+                          style === chip.val
+                            ? 'bg-purple-900 text-white font-bold shadow-2xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-slate-700">Prompt</label>
-                      <div className="flex items-center gap-2">
+                      <label className="block text-sm font-semibold text-slate-700">
+                        {referenceImage ? 'Editing Instructions & Desired Changes' : 'Prompt'}
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        {/* Voice Prompt Dictation with live transcription */}
+                        <VoicePromptButton
+                          onTranscript={(spokenText, mode) => {
+                            if (mode === 'replace') {
+                              setPrompt(spokenText);
+                            } else {
+                              setPrompt((prev) => (prev ? `${prev} ${spokenText}` : spokenText));
+                            }
+                          }}
+                          onNotice={showToast}
+                          disabled={isGenerating || isImageLoading}
+                        />
+
                         <button 
                           type="button"
                           onClick={handleEnhancePrompt}
-                          className="text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors shadow-2xs"
-                          title="Inject anti-deformation keywords, lighting, and razor-sharp photographic details"
+                          disabled={isEnhancingPrompt || isGenerating}
+                          className="text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 disabled:opacity-50 border border-purple-200/80 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer disabled:cursor-not-allowed"
+                          title="Expand prompt with professional lighting, camera lens, and photographic details"
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                          Enhance Clarity
+                          {isEnhancingPrompt ? (
+                            <Loader2 className="w-3.5 h-3.5 text-purple-600 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                          )}
+                          {isEnhancingPrompt ? 'Enhancing...' : 'AI Enhance'}
                         </button>
                         <button 
                           type="button"
                           onClick={() => setIsTipsModalOpen(true)}
-                          className="text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
+                          className="text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors px-1"
                         >
                           <Info className="w-3.5 h-3.5" />
                           Tips
@@ -588,12 +963,19 @@ export function ImageStudio() {
                     {(isGenerating || isImageLoading) ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Generating & Saving...
+                        {referenceImage ? 'Transforming & Editing...' : 'Generating & Saving...'}
                       </>
                     ) : (
                       <>
-                        <Wand2 className="w-5 h-5" />
-                        Generate Image
+                        {referenceImage ? <SlidersHorizontal className="w-5 h-5" /> : <Wand2 className="w-5 h-5" />}
+                        {referenceImage 
+                          ? (editMode === 'scene_change' ? 'Transform Scene (Face Locked)'
+                            : editMode === 'background_change' ? 'Change Background (Face Locked)'
+                            : editMode === 'posture_change' ? 'Change Posture (Face Locked)'
+                            : editMode === 'face_revamp' ? 'Revamp & Sharpen Face'
+                            : 'Transform Image (Face Locked)')
+                          : 'Generate Image'
+                        }
                       </>
                     )}
                   </button>
@@ -661,7 +1043,7 @@ export function ImageStudio() {
                         Please wait a moment
                       </div>
                     </motion.div>
-                  ) : generatedImage ? (
+                  ) : (generatedImage && generatedImage.trim() !== '') ? (
                     <motion.div
                       key="result"
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -676,6 +1058,14 @@ export function ImageStudio() {
                       
                       {/* Actions Overlay */}
                       <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                        <button 
+                          onClick={() => handleLoadForEdit(generatedImage, prompt)}
+                          className="px-3.5 py-3 bg-purple-900 text-white shadow-lg text-xs font-bold rounded-xl hover:bg-purple-800 transition-colors flex items-center gap-1.5"
+                          title="Edit Image: Change scene, background, posture or upscale while locking face"
+                        >
+                          <SlidersHorizontal className="w-4 h-4" />
+                          <span>Edit & Upscale</span>
+                        </button>
                         <button 
                           onClick={() => setZoomedImage(generatedImage)}
                           className="p-3 bg-white/90 backdrop-blur border border-white/20 shadow-lg text-slate-700 rounded-xl hover:bg-white hover:text-purple-900 transition-colors"
@@ -738,12 +1128,12 @@ export function ImageStudio() {
                                 onClick={() => {
                                   setModel('puter-flux');
                                   setError(null);
-                                  showToast('Switched to Puter.js FLUX.1 (Ultra-Sharp & Free)');
+                                  showToast('Switched to FLUX.1 Schnell (Ultra-Sharp)');
                                 }}
                                 className="px-3 py-1.5 bg-purple-900 hover:bg-purple-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                               >
                                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                                Try Puter.js FLUX.1 (Free)
+                                Try FLUX.1 Schnell
                               </button>
                             )}
 
@@ -752,12 +1142,12 @@ export function ImageStudio() {
                                 onClick={() => {
                                   setModel('puter-gpt-image');
                                   setError(null);
-                                  showToast('Switched to Puter GPT-Image 2 (High-Fidelity Photorealism)');
+                                  showToast('Switched to GPT-Image 2 (Photorealistic)');
                                 }}
                                 className="px-3 py-1.5 bg-indigo-900 hover:bg-indigo-800 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                               >
                                 <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
-                                Try Puter GPT-Image 2 (Free)
+                                Try GPT-Image 2
                               </button>
                             )}
 
@@ -774,14 +1164,6 @@ export function ImageStudio() {
                               </button>
                             )}
 
-                            <button
-                              onClick={() => setIsFreeCreditsModalOpen(true)}
-                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-                            >
-                              <Gift className="w-3.5 h-3.5" />
-                              Free Credits Guide ($300 - $25k)
-                            </button>
-
                             {model !== 'huggingface-flux' && (
                               <button
                                 onClick={() => {
@@ -791,7 +1173,7 @@ export function ImageStudio() {
                                 }}
                                 className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
                               >
-                                Try Free Hugging Face
+                                Try Hugging Face
                               </button>
                             )}
 
@@ -861,12 +1243,24 @@ export function ImageStudio() {
                       }`}
                     >
                       <div className="aspect-square rounded-lg overflow-hidden bg-slate-200 relative mb-2">
-                        <img 
-                          src={item.imageUrl} 
-                          alt={item.prompt} 
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
+                        {item.imageUrl && item.imageUrl.trim() !== '' ? (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.prompt} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : null}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLoadForEdit(item.imageUrl, item.prompt);
+                            }}
+                            title="Edit & Upscale this image"
+                            className="p-1.5 bg-purple-900 text-white rounded-md hover:bg-purple-800 transition-colors"
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -985,11 +1379,13 @@ export function ImageStudio() {
                 >
                   {/* Image Display */}
                   <div className="relative aspect-video bg-slate-100 overflow-hidden border-b border-slate-100">
-                    <img 
-                      src={item.imageUrl} 
-                      alt={item.prompt} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {item.imageUrl && item.imageUrl.trim() !== '' ? (
+                      <img 
+                        src={item.imageUrl} 
+                        alt={item.prompt} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : null}
                     <div className="absolute top-2.5 left-2.5 flex gap-1.5">
                       <span className="px-2 py-0.5 bg-black/60 backdrop-blur text-white text-[11px] font-mono rounded-md font-semibold">
                         {item.aspectRatio}
@@ -1001,6 +1397,13 @@ export function ImageStudio() {
 
                     {/* Image Hover Actions */}
                     <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-4">
+                      <button
+                        onClick={() => handleLoadForEdit(item.imageUrl, item.prompt)}
+                        className="p-2.5 bg-purple-900 text-white rounded-xl hover:bg-purple-800 transition-colors shadow-md"
+                        title="Edit & Upscale image in Studio"
+                      >
+                        <SlidersHorizontal className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => {
                           setGeneratedImage(item.imageUrl);
@@ -1064,6 +1467,27 @@ export function ImageStudio() {
                         </p>
                       )}
 
+                      {/* Locks indicators */}
+                      {(item.lockComplexion || item.lockAttire || item.faceLock) && (
+                        <div className="flex flex-wrap items-center gap-1 mb-2.5">
+                          {item.lockComplexion && (
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              🛡️ Complexion Locked
+                            </span>
+                          )}
+                          {item.lockAttire && (
+                            <span className="text-[10px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                              👗 Attire Preserved
+                            </span>
+                          )}
+                          {item.faceLock && (
+                            <span className="text-[10px] font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                              👤 Face Locked
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {/* Model badge */}
                       <div className="text-[11px] text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/60 w-fit mb-4 font-mono truncate max-w-full">
                         {getModelShortLabel(item.model)}
@@ -1073,11 +1497,20 @@ export function ImageStudio() {
                     {/* Action Bar */}
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                       <button
+                        onClick={() => handleLoadForEdit(item.imageUrl, item.prompt)}
+                        className="py-2 px-2.5 bg-purple-900 hover:bg-purple-800 text-white text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                        title="Edit scenes, background, posture or upscale this image"
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        Edit & Upscale
+                      </button>
+
+                      <button
                         onClick={() => handleRestoreHistoryItem(item)}
-                        className="flex-1 py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2 px-2.5 bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
-                        Reuse in Studio
+                        Reuse
                       </button>
 
                       <button
@@ -1241,182 +1674,8 @@ export function ImageStudio() {
         )}
       </AnimatePresence>
 
-      {/* Free API Credits & Grants Modal */}
+      {/* Fullscreen Lightbox Modal */}
       <AnimatePresence>
-        {isFreeCreditsModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsFreeCreditsModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative bg-white rounded-2xl shadow-xl border border-slate-100 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
-            >
-              <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/70">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                    <Gift className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">How to Get Free API Credits ($0 Cost)</h3>
-                    <p className="text-xs text-slate-500">Official developer programs, grants, and free API keys</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setIsFreeCreditsModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors p-1"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="p-5 overflow-y-auto space-y-5 text-sm text-slate-600">
-                {/* 1. Puter.js Zero-Risk Free AI */}
-                <div className="p-4 rounded-xl border border-purple-300 bg-purple-50/70 shadow-sm">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-purple-900 text-white text-xs font-bold flex items-center justify-center">1</span>
-                      <h4 className="font-bold text-slate-900 text-base">Puter.js (100% Free - Safe from Grok / xAI IP Blocks)</h4>
-                    </div>
-                    <span className="text-xs font-bold px-2 py-0.5 bg-purple-200 text-purple-900 rounded-full">Safe &amp; Free</span>
-                  </div>
-                  <p className="text-slate-700 text-xs leading-relaxed">
-                    Unlike xAI / Grok, which requires paid billing and aggressively suspends accounts or blocks IP addresses when attempting free calls, <strong>Puter.js</strong> provides open AI access directly without API keys, cards, or IP blocking risks.
-                  </p>
-                  <div className="mt-2.5 p-2.5 bg-white rounded-lg border border-purple-200 text-xs text-slate-700 space-y-1 font-medium">
-                    <p>✨ <strong>Integrated in this app:</strong></p>
-                    <p>• <strong>Image Studio:</strong> Select <strong>Puter.js AI (100% Free)</strong> in the model dropdown.</p>
-                    <p>• <strong>AI Research:</strong> Use Puter.js GPT-4o-mini, Claude 3.5 Sonnet, or DeepSeek without keys.</p>
-                  </div>
-                </div>
-
-                {/* 2. Instant Zero-Account Free FLUX */}
-                <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/70 shadow-sm">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center">2</span>
-                      <h4 className="font-bold text-slate-900 text-base">FLUX.1 & SDXL Turbo (100% Free - No Account Needed!)</h4>
-                    </div>
-                    <span className="text-xs font-bold px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded-full">Ready Now</span>
-                  </div>
-                  <p className="text-slate-700 text-xs leading-relaxed">
-                    You <strong>do not need to create an account or provide any payment details</strong>! We have enabled serverless FLUX.1 Schnell and SDXL Turbo directly inside this app.
-                  </p>
-                  <div className="mt-2.5 p-2.5 bg-white rounded-lg border border-emerald-200 text-xs text-slate-700 space-y-1 font-medium">
-                    <p>✨ <strong>How to use right now:</strong></p>
-                    <p>1. In the Studio model dropdown, select <strong>FLUX.1 Schnell (100% Free - No Account Needed)</strong>.</p>
-                    <p>2. Enter your visual prompt and click <strong>Generate</strong>.</p>
-                  </div>
-                </div>
-
-                {/* 3. Google Cloud $300 Free Trial */}
-                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">3</span>
-                      <h4 className="font-bold text-slate-900 text-base">Google Cloud $300 Free Trial (Use Your Google Account)</h4>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">$300 Free</span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    Since you already have a Google account and Google Pro, you do not need to register on a new third-party site. Activate the $300 Google Cloud credit grant directly to unlock <strong>Gemini 3.1 Flash Image</strong> with $0 out of pocket.
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <a 
-                      href="https://cloud.google.com/free" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                      Activate $300 Google Cloud Free Trial
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* 4. NVIDIA & Hugging Face Status */}
-                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-amber-600 text-white text-xs font-bold flex items-center justify-center">4</span>
-                      <h4 className="font-bold text-slate-900 text-base">Hugging Face (NVIDIA Acquisition Notice)</h4>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">Sign-up Issues</span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    NVIDIA officially announced an agreement to acquire Hugging Face for $12.9B. Due to extreme traffic surges and account migration policies, new account registrations are experiencing verification errors. <strong>You can skip Hugging Face entirely</strong> by using the built-in free FLUX.1 model above.
-                  </p>
-                </div>
-
-                {/* 5. Google for Startups Cloud Program */}
-                <div className="p-4 rounded-xl border border-purple-200 bg-purple-50/40">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-purple-900 text-white text-xs font-bold flex items-center justify-center">5</span>
-                      <h4 className="font-bold text-slate-900 text-base">Google for Startups ($2k to $25k+ Grants)</h4>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-purple-100 text-purple-900 rounded-full">Grants up to $25k+</span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    Google donates up to $2,000 in free credits for early-stage builders (Start Tier, no venture capital needed) and up to $25,000–$350,000 for AI developers.
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <a 
-                      href="https://cloud.google.com/startup" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-900 hover:bg-purple-800 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                      Apply to Google for Startups
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-
-                {/* 6. Together AI Free Starter Credits */}
-                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-slate-700 text-white text-xs font-bold flex items-center justify-center">6</span>
-                      <h4 className="font-bold text-slate-900 text-base">Together AI ($5 Free Starter Credits)</h4>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-slate-200 text-slate-800 rounded-full">~1,500 Images</span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    Sign up with your existing GitHub account or email at <strong>api.together.ai</strong> to get $5 in free credits for FLUX.1 Schnell.
-                  </p>
-                  <div className="mt-3">
-                    <a 
-                      href="https://api.together.ai" 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg transition-colors"
-                    >
-                      Sign Up at Together AI
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button 
-                  onClick={() => setIsFreeCreditsModalOpen(false)}
-                  className="px-5 py-2.5 bg-purple-900 hover:bg-purple-800 text-white font-medium rounded-xl transition-colors shadow-sm"
-                >
-                  Close Guide
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-        {/* Fullscreen Lightbox Modal */}
         {zoomedImage && (
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
             <motion.div 
@@ -1426,6 +1685,17 @@ export function ImageStudio() {
               className="relative max-w-5xl max-h-[90vh] w-full flex flex-col items-center justify-center"
             >
               <div className="absolute -top-12 right-0 flex items-center gap-3 text-white">
+                <button
+                  onClick={() => {
+                    handleLoadForEdit(zoomedImage, prompt);
+                    setZoomedImage(null);
+                  }}
+                  className="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  title="Edit & Upscale"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Edit & Upscale
+                </button>
                 <button
                   onClick={() => handleDownload(zoomedImage, prompt)}
                   className="p-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
@@ -1442,11 +1712,13 @@ export function ImageStudio() {
                 </button>
               </div>
 
-              <img 
-                src={zoomedImage} 
-                alt="High-Res Inspection" 
-                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/10" 
-              />
+              {zoomedImage && zoomedImage.trim() !== '' ? (
+                <img 
+                  src={zoomedImage} 
+                  alt="High-Res Inspection" 
+                  className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/10" 
+                />
+              ) : null}
             </motion.div>
           </div>
         )}

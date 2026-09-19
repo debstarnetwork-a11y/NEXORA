@@ -1,6 +1,6 @@
 {
   "name": "NEXORA",
-  "description": "A modern, premium AI research and image generation application.",
+  "description": "Comprehensive AI platform with deep research, academic workspace, PowerPoint studio, infographic studio, draw & label scientific anatomy with Word and PDF exports.",
   "requestFramePermissions": [
     "microphone"
   ],

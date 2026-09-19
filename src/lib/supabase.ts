@@ -16,20 +16,41 @@ export const supabase = isSupabaseConfigured
   : null;
 
 // ==========================================
-// Image History Operations
+// Image History Operations (Server Proxy + Fallback)
 // ==========================================
 
 export async function fetchSupabaseImageHistory(): Promise<ImageHistoryItem[]> {
+  // First attempt: Server-side proxy to bypass browser CORS, iframe restrictions, and adblockers
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const res = await fetch('/api/supabase/image-history?limit=25', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.items)) {
+        return data.items;
+      }
+    }
+  } catch (proxyErr) {
+    // Non-fatal, will try client fallback or return empty array
+    console.warn('Server Supabase history proxy unavailable:', proxyErr);
+  }
+
+  // Fallback: Direct client supabase if configured
   if (!supabase) return [];
   try {
     const { data, error } = await supabase
       .from('image_history')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(25);
 
     if (error) {
-      console.error('Error fetching image history from Supabase:', error.message);
+      console.warn('Notice fetching image history from Supabase:', error.message);
       return [];
     }
 
@@ -45,12 +66,35 @@ export async function fetchSupabaseImageHistory(): Promise<ImageHistoryItem[]> {
       timestamp: new Date(row.created_at).getTime()
     }));
   } catch (err) {
-    console.error('Supabase fetchImageHistory failed:', err);
+    console.warn('Supabase fetchImageHistory notice:', err);
     return [];
   }
 }
 
 export async function insertSupabaseImageHistory(item: ImageHistoryItem): Promise<boolean> {
+  // First attempt: Server-side proxy
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const res = await fetch('/api/supabase/image-history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        return true;
+      }
+    }
+  } catch (proxyErr) {
+    console.warn('Server Supabase history insert proxy unavailable:', proxyErr);
+  }
+
+  // Fallback: Direct client supabase if configured
   if (!supabase) return false;
   try {
     const { error } = await supabase.from('image_history').insert({
@@ -64,12 +108,12 @@ export async function insertSupabaseImageHistory(item: ImageHistoryItem): Promis
     });
 
     if (error) {
-      console.error('Error inserting image history into Supabase:', error.message);
+      console.warn('Notice inserting image history into Supabase:', error.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('Supabase insertImageHistory failed:', err);
+    console.warn('Supabase insertImageHistory notice:', err);
     return false;
   }
 }
@@ -86,7 +130,10 @@ export async function fetchSupabaseSavedImages(): Promise<SavedImage[]> {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase fetchSavedImages notice:', error.message);
+      return [];
+    }
     return (data || []).map((row: any) => ({
       id: row.id,
       url: row.url,
@@ -94,7 +141,7 @@ export async function fetchSupabaseSavedImages(): Promise<SavedImage[]> {
       timestamp: new Date(row.created_at).getTime()
     }));
   } catch (err) {
-    console.error('Supabase fetchSavedImages failed:', err);
+    console.warn('Supabase fetchSavedImages notice:', err);
     return [];
   }
 }
@@ -106,10 +153,13 @@ export async function insertSupabaseSavedImage(image: SavedImage): Promise<boole
       url: image.url,
       prompt: image.prompt
     });
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase insertSavedImage notice:', error.message);
+      return false;
+    }
     return true;
   } catch (err) {
-    console.error('Supabase insertSavedImage failed:', err);
+    console.warn('Supabase insertSavedImage notice:', err);
     return false;
   }
 }
@@ -118,10 +168,13 @@ export async function deleteSupabaseSavedImage(id: string): Promise<boolean> {
   if (!supabase) return false;
   try {
     const { error } = await supabase.from('saved_images').delete().eq('id', id);
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase deleteSavedImage notice:', error.message);
+      return false;
+    }
     return true;
   } catch (err) {
-    console.error('Supabase deleteSavedImage failed:', err);
+    console.warn('Supabase deleteSavedImage notice:', err);
     return false;
   }
 }
@@ -138,7 +191,10 @@ export async function fetchSupabaseSavedChats(): Promise<SavedChat[]> {
       .select('*')
       .order('updated_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase fetchSavedChats notice:', error.message);
+      return [];
+    }
     return (data || []).map((row: any) => ({
       id: row.id,
       title: row.title,
@@ -146,7 +202,7 @@ export async function fetchSupabaseSavedChats(): Promise<SavedChat[]> {
       timestamp: new Date(row.updated_at || row.created_at).getTime()
     }));
   } catch (err) {
-    console.error('Supabase fetchSavedChats failed:', err);
+    console.warn('Supabase fetchSavedChats notice:', err);
     return [];
   }
 }
@@ -158,10 +214,13 @@ export async function insertSupabaseSavedChat(chat: SavedChat): Promise<boolean>
       title: chat.title,
       messages: chat.messages
     });
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase insertSavedChat notice:', error.message);
+      return false;
+    }
     return true;
   } catch (err) {
-    console.error('Supabase insertSavedChat failed:', err);
+    console.warn('Supabase insertSavedChat notice:', err);
     return false;
   }
 }
@@ -178,7 +237,10 @@ export async function fetchSupabaseSavedPrompts(): Promise<SavedPrompt[]> {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase fetchSavedPrompts notice:', error.message);
+      return [];
+    }
     return (data || []).map((row: any) => ({
       id: row.id,
       title: row.title,
@@ -186,7 +248,7 @@ export async function fetchSupabaseSavedPrompts(): Promise<SavedPrompt[]> {
       timestamp: new Date(row.created_at).getTime()
     }));
   } catch (err) {
-    console.error('Supabase fetchSavedPrompts failed:', err);
+    console.warn('Supabase fetchSavedPrompts notice:', err);
     return [];
   }
 }
@@ -198,10 +260,13 @@ export async function insertSupabaseSavedPrompt(prompt: SavedPrompt): Promise<bo
       title: prompt.title,
       content: prompt.content
     });
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase insertSavedPrompt notice:', error.message);
+      return false;
+    }
     return true;
   } catch (err) {
-    console.error('Supabase insertSavedPrompt failed:', err);
+    console.warn('Supabase insertSavedPrompt notice:', err);
     return false;
   }
 }
@@ -219,7 +284,10 @@ export async function fetchSupabasePromptTemplates(): Promise<PromptTemplate[]> 
       .eq('is_public', true)
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase fetchPromptTemplates notice:', error.message);
+      return [];
+    }
     return (data || []).map((row: any) => ({
       id: row.id,
       title: row.title,
@@ -227,7 +295,7 @@ export async function fetchSupabasePromptTemplates(): Promise<PromptTemplate[]> 
       content: row.content
     }));
   } catch (err) {
-    console.error('Supabase fetchPromptTemplates failed:', err);
+    console.warn('Supabase fetchPromptTemplates notice:', err);
     return [];
   }
 }
