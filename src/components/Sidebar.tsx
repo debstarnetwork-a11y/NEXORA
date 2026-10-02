@@ -14,7 +14,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Compass
 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { View } from '../types';
@@ -22,7 +23,8 @@ import { useSpeech } from '../hooks/useSpeech';
 
 const NAV_ITEMS: { id: View; label: string; icon: any }[] = [
   { id: 'research', label: 'AI Research', icon: MessageSquare },
-  { id: 'workspace', label: 'Workspace', icon: FolderKanban },
+  { id: 'topic-ideator', label: 'Topic Studio & Gaps', icon: Compass },
+  { id: 'workspace', label: 'Thesis Workspace', icon: FolderKanban },
   { id: 'slides', label: 'PowerPoint Studio', icon: Presentation },
   { id: 'infographic', label: 'Infographic Studio', icon: BarChart3 },
   { id: 'draw-label', label: 'Draw & Label', icon: Microscope },
@@ -47,7 +49,8 @@ export function Sidebar() {
       startListening((text) => {
         const lower = text.toLowerCase();
         if (lower.includes('research')) setCurrentView('research');
-        else if (lower.includes('workspace') || lower.includes('document') || lower.includes('notes')) setCurrentView('workspace');
+        else if (lower.includes('topic') || lower.includes('ideator') || lower.includes('gap') || lower.includes('brainstorm')) setCurrentView('topic-ideator');
+        else if (lower.includes('workspace') || lower.includes('document') || lower.includes('notes') || lower.includes('thesis')) setCurrentView('workspace');
         else if (lower.includes('powerpoint') || lower.includes('slide')) setCurrentView('slides');
         else if (lower.includes('infographic') || lower.includes('chart')) setCurrentView('infographic');
         else if (lower.includes('draw') || lower.includes('label') || lower.includes('anatomy') || lower.includes('cell')) setCurrentView('draw-label');
@@ -145,7 +148,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      
+
       {/* Footer Plan Badge / Collapse Helper */}
       <div className={`mt-auto ${sidebarCollapsed ? 'p-2 text-center' : 'p-4'}`}>
         {!sidebarCollapsed ? (

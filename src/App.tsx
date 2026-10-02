@@ -18,6 +18,7 @@ import { PromptLibrary } from './pages/PromptLibrary';
 import { Projects } from './pages/Projects';
 import { Settings } from './pages/Settings';
 import { Workspace } from './pages/Workspace';
+import { TopicIdeator } from './pages/TopicIdeator';
 import { AnimatePresence, motion } from 'motion/react';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case 'research': return <AIResearch />;
+      case 'topic-ideator': return <TopicIdeator />;
       case 'workspace': return <Workspace />;
       case 'slides': return <PresentationStudio />;
       case 'infographic': return <InfographicStudio />;

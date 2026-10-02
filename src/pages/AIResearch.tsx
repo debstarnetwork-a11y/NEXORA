@@ -36,6 +36,8 @@ import {
 import { jsPDF } from 'jspdf';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { ChatMessage, DiagramConcept, LabelPin, InfographicData, SlideDeck } from '../types';
 import { useAppStore } from '../store';
 import { useSpeech } from '../hooks/useSpeech';
@@ -46,9 +48,23 @@ import {
   exportToPdfDocument, 
   exportToMarkdown, 
   exportToText, 
-  parseContentToSections 
+  parseContentToSections,
+  normalizeAccessedDates
 } from '../lib/documentExport';
 import { parseUploadedFile, UploadedDocumentPayload } from '../lib/documentImporter';
+import { ResearchIntegrityDashboard } from '../components/ResearchIntegrityDashboard';
+import { EvidenceMatrixView } from '../components/EvidenceMatrixView';
+import { ClaimAuditModal } from '../components/ClaimAuditModal';
+import { PreSubmissionAuditModal } from '../components/PreSubmissionAuditModal';
+import { ResearchIntegrityMetrics, ResearchGenerationMode, ResearchClaim } from '../types';
+import { CANONICAL_RESEARCH_SOURCES } from '../lib/researchEvidenceRegistry';
+import { 
+  extractClaimsFromText, 
+  calculateIntegrityMetrics, 
+  runPreSubmissionAudit, 
+  applyIntegrityQualificationsToText 
+} from '../lib/researchIntegrityEngine';
+import { generateBenchmarkResearchProject } from '../lib/benchmarkResearchProject';
 
 // Interactive In-Chat Diagram Visualizer
 function DiagramCardInChat({ diagram, onOpenStudio }: { diagram: DiagramConcept; onOpenStudio: () => void }) {
@@ -767,22 +783,40 @@ function SlideDeckCardInChat({ slideDeck, onOpenStudio }: { slideDeck: SlideDeck
 }
 
 export function AIResearch() {
-  const { saveChat, language, activeChatToLoad, clearActiveChatToLoad, setCurrentView, loadDiagram, createWorkspaceProject } = useAppStore();
+  const { 
+    saveChat, 
+    language, 
+    referenceStyle, 
+    setReferenceStyle, 
+    activeChatToLoad, 
+    clearActiveChatToLoad, 
+    setCurrentView, 
+    loadDiagram, 
+    createWorkspaceProject 
+  } = useAppStore();
   const [messages, setMessages] = useState<ChatMessage[]>([{
     id: '1',
     role: 'model',
-    content: 'Hello! I am NEXORA, your AI research assistant. How can I help you today?',
+    content: 'Hello! I am NEXORA, your advanced academic AI research assistant. I provide extensive scholarly analyses, multi-paragraph arguments, Harvard-style verified references, and scientific formulas written in standard LaTeX notation ($E = mc^2$, $\\Delta G^\\circ = -RT \\ln K$). How can I assist your research today?',
     timestamp: Date.now()
   }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatEngine, setChatEngine] = useState<string>('gemini-flash'); // Default to gemini-flash since it handles files
   const [chatTone, setChatTone] = useState<string>('Academic'); // Default to Academic
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   const [saveToast, setSaveToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<{name: string, data: string, type: 'image' | 'text'}[]>([]);
   const [attachedDocs, setAttachedDocs] = useState<UploadedDocumentPayload[]>([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [showIntegrityDashboard, setShowIntegrityDashboard] = useState<boolean>(true);
+  const [isEvidenceMatrixOpen, setIsEvidenceMatrixOpen] = useState<boolean>(false);
+  const [isClaimAuditOpen, setIsClaimAuditOpen] = useState<boolean>(false);
+  const [isPreSubmissionAuditOpen, setIsPreSubmissionAuditOpen] = useState<boolean>(false);
+  const [researchMode, setResearchMode] = useState<ResearchGenerationMode>('VERIFIED_RESEARCH');
+  const [activeAuditedClaims, setActiveAuditedClaims] = useState<ResearchClaim[]>([]);
+  const [integrityMetrics, setIntegrityMetrics] = useState<ResearchIntegrityMetrics | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -828,13 +862,14 @@ export function AIResearch() {
     title: string, 
     format: 'word' | 'pdf' | 'markdown' | 'text' | 'workspace'
   ) => {
-    const cleanTitle = title || 'NEXORA Scientific Research';
-    const sections = parseContentToSections(content);
+    const cleanTitle = title || 'Scientific Research';
+    const normalizedContent = normalizeAccessedDates(content);
+    const sections = parseContentToSections(normalizedContent);
     const payload = {
       title: cleanTitle,
-      author: 'NEXORA Academic Assistant',
+      author: '',
       category: 'Scientific Research',
-      rawText: content,
+      rawText: normalizedContent,
       sections
     };
 
@@ -846,7 +881,7 @@ export function AIResearch() {
         setTimeout(() => setSaveToast(null), 3000);
       } else if (format === 'pdf') {
         setSaveToast({ message: 'Generating PDF document...', type: 'info' });
-        exportToPdfDocument(payload);
+        await exportToPdfDocument(payload);
         setSaveToast({ message: 'PDF document (.pdf) downloaded successfully!', type: 'success' });
         setTimeout(() => setSaveToast(null), 3000);
       } else if (format === 'markdown') {
@@ -881,6 +916,76 @@ export function AIResearch() {
       setSaveToast({ message: `Export error: ${err.message}`, type: 'info' });
       setTimeout(() => setSaveToast(null), 3000);
     }
+  };
+
+  const handleLoadBenchmarkProject = () => {
+    try {
+      const benchmark = generateBenchmarkResearchProject();
+      
+      // Also register into Workspace projects in store
+      createWorkspaceProject({
+        title: benchmark.title,
+        role: 'researcher',
+        category: 'Differential Privacy & Algorithmic Fairness',
+        description: 'Seminal doctoral dissertation evaluating DP-SGD trade-offs and Demographic Parity in Higher Education analytics.',
+        pages: benchmark.pages.map(p => ({
+          id: p.id,
+          title: p.title,
+          content: p.content,
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }))
+      });
+
+      // Combine introduction and literature review for immediate inspection
+      const combinedCorpus = benchmark.pages.map(p => `## ${p.title}\n\n${p.content}`).join('\n\n---\n\n');
+      
+      const newAssistantMsg: ChatMessage = {
+        id: `bench-${Date.now()}`,
+        role: 'model',
+        content: `# ${benchmark.title}\n\n${combinedCorpus}`,
+        timestamp: Date.now()
+      };
+
+      setMessages(prev => [...prev, newAssistantMsg]);
+
+      // Run real-time claim extraction and metric computation
+      const claims = extractClaimsFromText(combinedCorpus, "Higher Education");
+      setActiveAuditedClaims(claims);
+      const metrics = calculateIntegrityMetrics(claims, CANONICAL_RESEARCH_SOURCES);
+      setIntegrityMetrics(metrics);
+
+      setSaveToast({ 
+        message: `Benchmark Loaded: "${benchmark.title}" with 10 peer-reviewed sources and verified claims!`, 
+        type: 'success' 
+      });
+      setTimeout(() => setSaveToast(null), 5000);
+    } catch (err: any) {
+      setSaveToast({ message: `Error loading benchmark: ${err.message}`, type: 'info' });
+      setTimeout(() => setSaveToast(null), 3500);
+    }
+  };
+
+  const handleApplyFixesToLatestMessage = (sanitizedText: string) => {
+    setMessages(prev => {
+      const copy = [...prev];
+      for (let i = copy.length - 1; i >= 0; i--) {
+        if (copy[i].role === 'model') {
+          copy[i] = { ...copy[i], content: sanitizedText };
+          break;
+        }
+      }
+      return copy;
+    });
+
+    // Re-extract claims and recalculate metrics
+    const updatedClaims = extractClaimsFromText(sanitizedText, "Higher Education");
+    setActiveAuditedClaims(updatedClaims);
+    const updatedMetrics = calculateIntegrityMetrics(updatedClaims, CANONICAL_RESEARCH_SOURCES);
+    setIntegrityMetrics(updatedMetrics);
+
+    setSaveToast({ message: 'Academic qualifications and de-inflation applied to manuscript!', type: 'success' });
+    setTimeout(() => setSaveToast(null), 4000);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'text') => {
@@ -960,24 +1065,79 @@ export function AIResearch() {
     setFallbackNotice(null);
 
     try {
-      let fullPrompt = `SYSTEM DIRECTIVE: You are an expert AI Assistant instructed to respond in a **${chatTone}** style.
+      const currentRefStyle = referenceStyle || 'Harvard';
+      let fullPrompt = `SYSTEM DIRECTIVE: You are an expert AI Research Assistant instructed to respond in a **${chatTone}** style.
 
-MANDATORY RULES:
-1. EXTENDED LENGTH: The text must be extended beyond regular AI limit per prompt unless the user says or prompts otherwise. Provide an extensive, comprehensive, deep-dive, multi-page response (aiming for 1,500 to 2,500+ words). Thoroughly unpack every concept, mechanism, historical context, granular analysis, and nuanced implication without truncating or summarizing.
-2. STANDALONE HEADINGS: Headings must stand alone and body text must be under each heading. Format all headings using markdown (e.g. ## Heading Title) strictly on their own separate line. Never place body text on the same line as a heading.
-3. PARAGRAPH INDENTATION: Paragraphs must be clearly separated from each other by indentation. Write coherent, full paragraphs where each paragraph starts with indentation.`;
+MANDATORY STRUCTURAL & COMPOSITION RULES:
+1. EXTENDED DEPTH & SCHOLARLY LENGTH: Provide an extensive, comprehensive, multi-page scholarly analysis (aiming for 1,500 to 2,500+ words). Thoroughly unpack every concept, mechanism, historical context, empirical data, granular analysis, and nuanced implication without abbreviating or summarizing.
+2. STANDALONE HEADINGS & SUBHEADINGS:
+   - Headings and subheadings (e.g. ## Major Section, ### Granular Subheading) MUST stand strictly on their own separate line in clean markdown. Never place body text on the same line as a heading.
+3. NO PROLIFERATION OF SUBHEADINGS & SUBSTANTIAL MULTI-PARAGRAPH DEPTH:
+   - You must NOT proliferate subheadings without substantial content or text under each subheading. Never create shallow, fragmented subheadings followed by only 1, 2, or 3 brief paragraphs or bullet points.
+   - Under EVERY single subheading (H2, H3, H4), you MUST provide MORE THAN 3 OR 4 PARAGRAPHS (at least 4 to 6+ rich, well-developed, coherent, and empirically grounded paragraphs per subheading).
+   - Under no circumstances should any subheading contain only 1, 2, or 3 brief paragraphs or a summary.
+   - Deeply articulate theoretical context, biochemical, physical, or computational mechanisms, experimental evidence, literature debates, and practical implications across consecutive paragraphs under each subheading.
+4. PARAGRAPH INDENTATION & CLEAR DEMARCATION:
+   - Each paragraph under a subheading must be distinctly separated from consecutive paragraphs with double line breaks and clear first-line paragraph indentations.
+   - Separate every paragraph so that each paragraph under a subheading is clearly delineated and formatted for indented academic reading.`;
 
       if (language === 'English (UK)' || language === 'en-GB' || language?.toLowerCase().includes('uk')) {
-        fullPrompt += `\n4. UK ENGLISH (BRITISH ENGLISH) MANDATE: The user has selected UK English. You MUST respond strictly in British / UK English. Always use standard British spelling (e.g., 'colour', 'behaviour', 'analyse', 'paralyse', 'programme', 'centre', 'theatre', 'defence', 'licence' [noun], 'ageing', 'judgement', 'skilful', 'prioritise', 'organise', 'catalogue') and British terminology and idioms across the entirety of your response.`;
+        fullPrompt += `\n5. UK ENGLISH (BRITISH ENGLISH) MANDATE: The user has selected UK English. You MUST respond strictly in British / UK English. Always use standard British spelling (e.g., 'colour', 'behaviour', 'analyse', 'paralyse', 'programme', 'centre', 'theatre', 'defence', 'licence' [noun], 'ageing', 'judgement', 'skilful', 'prioritise', 'organise', 'catalogue') and British terminology and idioms across the entirety of your response.`;
       } else if (language === 'English (US)' || language === 'en-US' || language?.toLowerCase().includes('us')) {
-        fullPrompt += `\n4. US ENGLISH (AMERICAN ENGLISH) MANDATE: The user has selected US English. You MUST respond in American / US English using standard American spelling (e.g., 'color', 'behavior', 'analyze', 'paralyze', 'program', 'center', 'theater', 'defense', 'license', 'aging', 'judgment', 'skillful', 'prioritize', 'organize', 'catalog') throughout.`;
+        fullPrompt += `\n5. US ENGLISH (AMERICAN ENGLISH) MANDATE: The user has selected US English. You MUST respond in American / US English using standard American spelling (e.g., 'color', 'behavior', 'analyze', 'paralyze', 'program', 'center', 'theater', 'defense', 'license', 'aging', 'judgment', 'skillful', 'prioritize', 'organize', 'catalog') throughout.`;
       } else if (language) {
-        fullPrompt += `\n4. LANGUAGE MANDATE: You MUST respond in **${language}**.`;
+        fullPrompt += `\n5. LANGUAGE MANDATE: You MUST respond in **${language}**.`;
       }
 
-      if (chatTone === 'Academic') {
-        fullPrompt += `\n5. ACADEMIC & CITATION INTEGRITY: If you must reference an author or a study, they MUST be a real, verifiable author or publication. You MUST NOT hallucinate citations. All references and citations MUST be properly formatted using the Harvard referencing style (Author, Year) with a full Reference list at the end.`;
-      }
+      const now = new Date();
+      const formattedCurrentDateHarvard = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      const formattedCurrentDateNumeric = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+      const formattedCurrentDateUS = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+      fullPrompt += `\n6. CURRENT CALENDAR DATE & CITATION INTEGRITY (${currentRefStyle.toUpperCase()} STYLE):
+- CRITICAL REAL-TIME CALENDAR DATE: Today's exact current date is **${formattedCurrentDateHarvard}** (${formattedCurrentDateNumeric} / ${formattedCurrentDateUS}).
+- The user has selected **${currentRefStyle}** reference style (default: Harvard Style).
+- In-text citations and the concluding References / Bibliography section MUST strictly adhere to the official rules of **${currentRefStyle}**:
+  * If Harvard Style: In-text citations formatted as (Author, Year) or (Author, Year, p. xx). References list alphabetized by author surname: Author, A.A. (Year) 'Title of article', *Journal Name*, Volume(Issue), pp. xx–xx. Available at: URL [Accessed ${formattedCurrentDateHarvard}].
+  * If APA 7th Edition: In-text citations formatted as (Author, Year). References list: Author, A. A. (Year). Title of article. *Journal Title*, Volume(Issue), pages. https://doi.org/...
+  * If MLA 9th Edition: In-text citations formatted as (Author page). Works Cited list alphabetized with container details and direct URLs/DOIs. Accessed ${formattedCurrentDateHarvard}.
+  * If Chicago / Turabian: Author-Date format (Author Year, page) with complete References list.
+  * If IEEE: Numbered in-text citations in square brackets like [1], [2] corresponding to a sequential numbered Reference list.
+  * If Vancouver: Numbered citations in parentheses (1) or superscript corresponding to an indexed biomedical Reference list.
+  * If Nature Style: Numbered superscript citations matching the bibliography list: Author, A. Title. *Journal* Vol, pages (Year).
+- ACCESSED DATE ACCURACY MANDATE: For ANY citation that includes an "Accessed [Date]" or "Accessed: [Date]" notation, you MUST strictly use TODAY'S real current date: **${formattedCurrentDateHarvard}** (or **${formattedCurrentDateNumeric}**). NEVER invent an obsolete or past date (such as 2022, 2023, 2024, or 2025). Every single accessed date MUST tally with today's date (${formattedCurrentDateNumeric} / ${formattedCurrentDateHarvard}).
+
+7. REAL AND VERIFIED ONLINE REFERENCES ONLY (NO FICTIONAL OR BROKEN LINKS):
+- Every cited online source, journal paper, textbook, preprint, or digital resource MUST be real, verifiable, and accurately attributed. You are STRICTLY FORBIDDEN from inventing fictional authors, non-existent studies, or hallucinating false URLs.
+- In the References list, online sources MUST provide REAL, CORRECT, AND RESOLVABLE hyperlinks.
+- Use genuine, permanent DOIs where available (e.g., [https://doi.org/10.xxxx/...](https://doi.org/10.xxxx/...)), official PubMed IDs (e.g., [PubMed: 12345678](https://pubmed.ncbi.nlm.nih.gov/12345678/)), NCBI/NIH records ([https://www.ncbi.nlm.nih.gov/...](https://www.ncbi.nlm.nih.gov/...)), arXiv preprints ([https://arxiv.org/abs/...](https://arxiv.org/abs/...)), Nature/Science/Cell publishing domains, or authoritative educational databases (such as [https://en.wikipedia.org/wiki/...](https://en.wikipedia.org/wiki/...) or [https://www.britannica.com/...](https://www.britannica.com/...)).
+- If you cite an established study whose exact deep article path or DOI string you cannot guarantee with 100% certainty, you MUST link directly to the verified PubMed database query link or Google Scholar query link for that exact paper title (e.g., [PubMed Search: Author Title](https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent('cellular biology')}) or [Google Scholar Search](https://scholar.google.com/scholar?q=${encodeURIComponent('cellular biology')})). NEVER invent a fake dead URL. Every link must be real, active, and lead to the authentic scientific record.
+
+8. SCIENTIFIC FORMULA LATEX MANDATE:
+- EVERY scientific formula, chemical reaction equation, mathematical expression, thermodynamic equation, physical law, quantum mechanical equation, stoichiometry, and statistical formulation MUST be correctly written using standard LaTeX notation.
+- Inline formulas MUST use standard inline LaTeX delimiters: \`$formula$\` (e.g., \`$E = mc^2$\`, \`$\\Delta G^\\circ = -RT \\ln K_{eq}$\`, \`$PV = nRT$\`, \`$pH = -\\log_{10}[H^+]$\`, \`$\\lambda = \\frac{h}{p}$\`, \`$v = \\frac{V_{\\max}[S]}{K_m + [S]}$\`, \`$\\text{H}_2\\text{O}$\`, \`$\\mathrm{6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2}$\`).
+- Display / Block formulas, major chemical equations, and numbered mathematical derivations MUST be enclosed in standalone display LaTeX delimiters:
+  $$
+  \\text{Formula / Derivation}
+  $$
+  (e.g.,
+  $$ \\Delta G = \\Delta H - T\\Delta S $$
+  $$ \\hat{H}\\Psi = E\\Psi $$
+  $$ \\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi} $$
+  $$ \\mathrm{CH_4(g) + 2O_2(g) \\rightarrow CO_2(g) + 2H_2O(l)} \\quad \\Delta H^\\circ = -890.3\\text{ kJ/mol} $$
+  )
+- NEVER output plain ASCII or unformatted approximations for formulas (such as "E=mc^2", "PV=nRT", "delta G = delta H - T delta S", or "H2O -> H+ + OH-"). Always format every scientific formula with exact, clean LaTeX syntax.
+
+9. ACADEMIC RESEARCH INTEGRITY, EVIDENCE FIDELITY & REASONING PRINCIPLES:
+- Pipeline standard: RESEARCH → EVIDENCE → REASONING → VERIFICATION → WRITING → AUDIT.
+- Mode: ${researchMode === 'VERIFIED_RESEARCH' ? 'MODE A: VERIFIED RESEARCH ONLY (Zero speculation, all empirical claims grounded in verified retrieved literature)' : 'MODE B: EXPLORATORY RESEARCH (Explicitly distinguish conjectures and hypotheses from established facts)'}.
+- NEVER fabricate citations, author lists, publication years, sample sizes, numerical metrics, or conclusions.
+- Explicitly distinguish: LITERATURE FINDINGS vs AUTHOR INTERPRETATIONS vs RESEARCH HYPOTHESES.
+- Distinguish DIRECT EVIDENCE from TRANSFERABLE / INDIRECT EVIDENCE (e.g. if referencing computer vision benchmark studies such as CIFAR-10, acknowledge domain transfer rather than claiming direct higher education study).
+- Numerical Claim Verification: Never invent exact percentages or parameter values (e.g. ε, N, accuracy). If exact value is unverified from retrieved source, qualify statement honestly.
+- Avoid inflated academic buzzwords ("the theoretical gold standard", "fundamentally demonstrates", "paradigm-shifting"). Use measured scholarly diction.
+- Theoretical Framework Justification: Explain what frameworks explain, assumptions, and link to quantitative criteria.
+- Fairness Metric Justification: When selecting Demographic Parity, Equal Opportunity, etc., explain what the metric measures, what it does NOT measure, and trade-offs.`;
 
       fullPrompt += `\n\nUser Query:\n${currentInput}`;
 
@@ -999,53 +1159,86 @@ MANDATORY RULES:
         });
       }
 
+      let usedGemini = false;
       if (chatEngine.startsWith('puter-')) {
         let puterModel = 'gpt-4o-mini';
-        if (chatEngine === 'puter-claude-3-5') puterModel = 'claude-3-5-sonnet';
-        if (chatEngine === 'puter-deepseek') puterModel = 'deepseek-chat';
-        if (chatEngine === 'puter-gpt-4o') puterModel = 'gpt-4o';
+        let engineLabel = 'Selected engine';
+        if (chatEngine === 'puter-claude-3-5') {
+          puterModel = 'claude-3-5-sonnet';
+          engineLabel = 'Claude 3.5 Sonnet';
+        } else if (chatEngine === 'puter-deepseek') {
+          puterModel = 'deepseek-chat';
+          engineLabel = 'DeepSeek Chat';
+        } else if (chatEngine === 'puter-gpt-4o') {
+          puterModel = 'gpt-4o';
+          engineLabel = 'GPT-4o';
+        } else if (chatEngine === 'puter-grok') {
+          puterModel = 'grok-beta';
+          engineLabel = 'Grok 2';
+        } else if (chatEngine === 'puter-kimi') {
+          puterModel = 'moonshot-v1-8k';
+          engineLabel = 'Kimi Chat';
+        } else if (chatEngine === 'puter-gpt-4o-mini') {
+          puterModel = 'gpt-4o-mini';
+          engineLabel = 'GPT-4o-mini';
+        }
 
-        const reply = await puterChat(fullPrompt, puterModel);
-        const modelMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'model',
-          content: reply,
-          timestamp: Date.now()
-        };
-        setMessages(prev => [...prev, modelMessage]);
-      } else {
-        // Try Gemini backend API first
         try {
-          const formattedFiles = [
-            ...currentFiles.map(f => f.type === 'image' ? f.data : `${f.name}:\n${f.data}`),
-            ...currentDocs.map(d => d.type === 'image' && d.rawBase64 ? d.rawBase64 : `${d.name} (${d.type}):\n${d.text}`)
-          ];
+          const reply = await puterChat(fullPrompt, puterModel);
+          const modelMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'model',
+            content: normalizeAccessedDates(reply),
+            timestamp: Date.now()
+          };
+          setMessages(prev => [...prev, modelMessage]);
+          return;
+        } catch (puterErr: any) {
+          console.warn(`Primary chat model ${puterModel} unavailable, switching to secondary:`, puterErr);
+          setFallbackNotice(`${engineLabel} is currently busy. Seamlessly fulfilled using the primary research engine.`);
+          usedGemini = true;
+          // Continue down to server Gemini backend
+        }
+      }
 
-          const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              prompt: currentInput,
-              tone: chatTone,
-              language: language || 'English (US)',
-              files: formattedFiles
-            })
-          });
+      // Try Gemini backend API
+      try {
+        const formattedFiles = [
+          ...currentFiles.map(f => f.type === 'image' ? f.data : `${f.name}:\n${f.data}`),
+          ...currentDocs.map(d => d.type === 'image' && d.rawBase64 ? d.rawBase64 : `${d.name} (${d.type}):\n${d.text}`)
+        ];
 
-          const data = await response.json();
-          if (response.ok && data.text) {
-            const modelMessage: ChatMessage = {
-              id: (Date.now() + 1).toString(),
-              role: 'model',
-              content: data.text,
-              timestamp: Date.now()
-            };
-            setMessages(prev => [...prev, modelMessage]);
-            return;
-          } else {
-            throw new Error(data.error || 'Gemini API unavailable');
-          }
-        } catch (geminiErr: any) {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            prompt: currentInput,
+            tone: chatTone,
+            language: language || 'English (US)',
+            referenceStyle: currentRefStyle,
+            files: formattedFiles,
+            engine: chatEngine
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.text) {
+          const modelMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'model',
+            content: normalizeAccessedDates(data.text),
+            timestamp: Date.now()
+          };
+          setMessages(prev => [...prev, modelMessage]);
+          const claims = extractClaimsFromText(modelMessage.content, "Higher Education");
+          setActiveAuditedClaims(claims);
+          setIntegrityMetrics(calculateIntegrityMetrics(claims, CANONICAL_RESEARCH_SOURCES));
+          return;
+        } else {
+          throw new Error(data.error || 'Gemini API unavailable');
+        }
+      } catch (geminiErr: any) {
+        if (!usedGemini) {
           console.warn('Gemini chat failed, seamlessly falling back to backup AI engine:', geminiErr);
           setFallbackNotice('Primary AI engine busy. Seamlessly switched to backup engine with identical depth constraints.');
           
@@ -1053,10 +1246,15 @@ MANDATORY RULES:
           const modelMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
             role: 'model',
-            content: reply,
+            content: normalizeAccessedDates(reply),
             timestamp: Date.now()
           };
           setMessages(prev => [...prev, modelMessage]);
+          const claims = extractClaimsFromText(modelMessage.content, "Higher Education");
+          setActiveAuditedClaims(claims);
+          setIntegrityMetrics(calculateIntegrityMetrics(claims, CANONICAL_RESEARCH_SOURCES));
+        } else {
+          throw geminiErr;
         }
       }
     } catch (error: any) {
@@ -1084,7 +1282,7 @@ MANDATORY RULES:
     setMessages([{
       id: Date.now().toString(),
       role: 'model',
-      content: 'Hello! I am NEXORA, your AI research assistant. How can I help you today?',
+      content: 'Hello! I am NEXORA, your advanced academic AI research assistant. I provide extensive scholarly analyses, multi-paragraph arguments, Harvard-style verified references, and scientific formulas written in standard LaTeX notation ($E = mc^2$, $\\Delta G^\\circ = -RT \\ln K$). How can I assist your research today?',
       timestamp: Date.now()
     }]);
     setSaveToast(null);
@@ -1161,9 +1359,25 @@ MANDATORY RULES:
     doc.save(`NEXORA_Chat_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const handleCopyContent = (id: string, text: string) => {
+    if (!text) return;
+    const normalized = normalizeAccessedDates(text);
+    navigator.clipboard.writeText(normalized);
+    setCopiedMessageId(id);
+    setSaveToast({ message: 'Generated content copied to clipboard!', type: 'success' });
+    setTimeout(() => {
+      setCopiedMessageId((prev) => (prev === id ? null : prev));
+    }, 2500);
+    setTimeout(() => {
+      setSaveToast((prev) => (prev?.message.includes('copied') ? null : prev));
+    }, 3000);
   };
+
+  const copyToClipboard = (text: string) => {
+    handleCopyContent('quick-copy', text);
+  };
+
+  const latestModelMessage = [...messages].reverse().find(m => m.role === 'model' && m.id !== '1');
 
   return (
     <div className="h-full flex flex-col max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8">
@@ -1177,10 +1391,33 @@ MANDATORY RULES:
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          {/* Reference Style Dropdown (Default: Harvard Style) */}
+          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 text-xs shadow-2xs">
+            <div className="flex items-center gap-1 pl-2 text-slate-500">
+              <BookOpen className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400 shrink-0" />
+              <span className="font-medium hidden sm:inline">Ref Style:</span>
+            </div>
+            <select
+              value={referenceStyle || 'Harvard'}
+              onChange={(e) => setReferenceStyle(e.target.value)}
+              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-purple-900 cursor-pointer text-xs"
+              title="Select Academic Reference Style (Default: Harvard Style)"
+            >
+              <option value="Harvard">Harvard Style (Default)</option>
+              <option value="APA 7th">APA 7th Edition</option>
+              <option value="MLA 9th">MLA 9th Edition</option>
+              <option value="Chicago">Chicago / Turabian</option>
+              <option value="IEEE">IEEE (Numbered)</option>
+              <option value="Vancouver">Vancouver (Biomedical)</option>
+              <option value="Oxford">Oxford (Notes & Bib)</option>
+              <option value="Nature">Nature Journal</option>
+            </select>
+          </div>
+
           {/* AI Style/Tone Selector */}
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-1 text-xs">
-            <span className="text-slate-500 font-medium pl-2 hidden sm:inline">Style:</span>
+            <span className="text-slate-500 font-medium pl-2 hidden sm:inline">Tone:</span>
             <select
               value={chatTone}
               onChange={(e) => setChatTone(e.target.value)}
@@ -1203,10 +1440,12 @@ MANDATORY RULES:
               onChange={(e) => setChatEngine(e.target.value)}
               className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-900 cursor-pointer text-xs"
             >
+              <option value="gemini-flash">Gemini 2.5 Flash</option>
               <option value="puter-gpt-4o-mini">GPT-4o-mini</option>
               <option value="puter-claude-3-5">Claude 3.5 Sonnet</option>
               <option value="puter-deepseek">DeepSeek Chat</option>
-              <option value="gemini-flash">Gemini 2.5 Flash</option>
+              <option value="puter-grok">Grok 2</option>
+              <option value="puter-kimi">Kimi Chat</option>
             </select>
           </div>
 
@@ -1215,6 +1454,31 @@ MANDATORY RULES:
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span>{language === 'English (UK)' ? 'UK English' : language === 'English (US)' ? 'US English' : language}</span>
           </div>
+
+          {/* Copy Latest Generated Content Button in Header */}
+          {latestModelMessage && (
+            <button
+              onClick={() => handleCopyContent('header-copy', latestModelMessage.content)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border font-semibold text-xs transition-all shadow-xs cursor-pointer ${
+                copiedMessageId === 'header-copy'
+                  ? 'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-400/30'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-purple-900'
+              }`}
+              title="Copy latest generated research content to clipboard"
+            >
+              {copiedMessageId === 'header-copy' ? (
+                <>
+                  <Check className="w-4 h-4 text-white" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-purple-900" />
+                  <span>Copy Content</span>
+                </>
+              )}
+            </button>
+          )}
 
           <button onClick={handleExportPDF} className="p-2.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-purple-900 transition-all shadow-sm" title="Export as PDF">
             <FileDown className="w-5 h-5" />
@@ -1273,6 +1537,19 @@ MANDATORY RULES:
         </div>
       )}
 
+      {/* Academic Research Integrity & Traceability Dashboard */}
+      {showIntegrityDashboard && (
+        <ResearchIntegrityDashboard
+          metrics={integrityMetrics}
+          mode={researchMode}
+          onModeChange={setResearchMode}
+          onOpenEvidenceMatrix={() => setIsEvidenceMatrixOpen(true)}
+          onOpenClaimAudit={() => setIsClaimAuditOpen(true)}
+          onOpenPreSubmissionAudit={() => setIsPreSubmissionAuditOpen(true)}
+          onLoadBenchmarkProject={handleLoadBenchmarkProject}
+        />
+      )}
+
       <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {messages.map((msg) => (
@@ -1315,32 +1592,54 @@ MANDATORY RULES:
                 }`}>
                   <div className={`markdown-body custom-markdown ${msg.role === 'user' ? 'text-white' : ''}`}>
                     <Markdown 
-                      remarkPlugins={[remarkGfm]}
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[[rehypeKatex, { output: 'html' }]]}
                       components={{
-                        h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-6 mb-3 block text-slate-900 border-b pb-1.5 border-slate-200" {...props} />,
-                        h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-5 mb-2.5 block text-slate-900" {...props} />,
-                        h3: ({ node, ...props }) => <h3 className="text-lg font-bold mt-4 mb-2 block text-purple-950" {...props} />,
-                        h4: ({ node, ...props }) => <h4 className="text-base font-bold mt-3 mb-1.5 block text-slate-900" {...props} />,
-                        p: ({ node, ...props }) => <p className="leading-relaxed my-2 block" {...props} />,
-                        strong: ({ node, ...props }) => <strong className="font-bold text-slate-950" {...props} />,
-                        em: ({ node, ...props }) => <em className="italic text-slate-800" {...props} />,
+                        h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-6 mb-3 block text-slate-900 border-b pb-1.5 border-slate-200 dark:text-slate-100 dark:border-slate-700" {...props} />,
+                        h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-6 mb-3 block text-purple-900 border-b pb-1 border-purple-100 dark:text-purple-300 dark:border-purple-900/40" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-lg font-bold mt-5 mb-2.5 block text-slate-900 dark:text-slate-100" {...props} />,
+                        h4: ({ node, ...props }) => <h4 className="text-base font-bold mt-4 mb-2 block text-slate-800 dark:text-slate-200" {...props} />,
+                        p: ({ node, ...props }) => <p className={`leading-relaxed my-3 block ${msg.role === 'model' ? 'indent-6 sm:indent-8' : ''}`} {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-bold text-slate-950 dark:text-white" {...props} />,
+                        em: ({ node, ...props }) => <em className="italic text-slate-800 dark:text-slate-200" {...props} />,
                         ul: ({ node, ...props }) => <ul className="my-3 pl-6 list-disc space-y-1" {...props} />,
                         ol: ({ node, ...props }) => <ol className="my-3 pl-6 list-decimal space-y-1" {...props} />,
-                        li: ({ node, ...props }) => <li className="mb-1 leading-relaxed" {...props} />,
-                        blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-purple-800 bg-purple-50 px-4 py-2 my-3 rounded-r-lg italic text-slate-700" {...props} />,
+                        li: ({ node, ...props }) => <li className="mb-1 leading-relaxed [&>p]:indent-0" {...props} />,
+                        blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-purple-800 bg-purple-50 px-4 py-2 my-3 rounded-r-lg italic text-slate-700 dark:bg-purple-950/30 dark:text-slate-300 [&>p]:indent-0" {...props} />,
                         table: ({ node, ...props }) => (
                           <div className="my-4 w-full overflow-x-auto rounded-xl border border-slate-300 shadow-xs">
-                            <table className="w-full text-left border-collapse text-sm bg-white" {...props} />
+                            <table className="w-full text-left border-collapse text-sm bg-white dark:bg-slate-900" {...props} />
                           </div>
                         ),
                         thead: ({ node, ...props }) => <thead className="bg-purple-900 text-white font-bold" {...props} />,
                         th: ({ node, ...props }) => <th className="py-2.5 px-3.5 text-xs font-bold uppercase tracking-wider border border-purple-800/40 text-white whitespace-nowrap" {...props} />,
-                        tbody: ({ node, ...props }) => <tbody className="divide-y divide-slate-200" {...props} />,
-                        tr: ({ node, ...props }) => <tr className="hover:bg-purple-50/50 even:bg-slate-50/70" {...props} />,
-                        td: ({ node, ...props }) => <td className="py-2.5 px-3.5 text-sm text-slate-800 border border-slate-200 align-top" {...props} />,
+                        tbody: ({ node, ...props }) => <tbody className="divide-y divide-slate-200 dark:divide-slate-800" {...props} />,
+                        tr: ({ node, ...props }) => <tr className="hover:bg-purple-50/50 even:bg-slate-50/70 dark:even:bg-slate-800/40" {...props} />,
+                        td: ({ node, ...props }) => <td className="py-2.5 px-3.5 text-sm text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 align-top [&>p]:indent-0" {...props} />,
+                        a: ({ node, href, children, ...props }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-purple-700 dark:text-purple-400 hover:text-purple-950 dark:hover:text-purple-200 underline decoration-purple-300 hover:decoration-purple-700 font-semibold inline-flex items-center gap-0.5 break-all hover:bg-purple-50 dark:hover:bg-purple-950/50 px-1 py-0.5 rounded transition-colors"
+                            {...props}
+                          >
+                            <span>{children}</span>
+                            <ExternalLink className="w-3 h-3 inline-block shrink-0 opacity-70 ml-0.5" />
+                          </a>
+                        ),
                         img: ({ node, src, alt, ...props }: any) => {
                           if (!src || typeof src !== 'string' || src.trim() === '') return null;
                           return <img src={src} alt={alt || ''} className="max-w-full h-auto rounded-xl my-2 border border-slate-200" {...props} />;
+                        },
+                        pre: ({ node, ...props }: any) => (
+                          <pre className="my-3 p-3.5 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto border border-slate-800 shadow-xs leading-snug whitespace-pre" {...props} />
+                        ),
+                        code: ({ node, inline, className, children, ...props }: any) => {
+                          if (inline) {
+                            return <code className="bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono text-xs font-semibold dark:bg-purple-950 dark:text-purple-200" {...props}>{children}</code>;
+                          }
+                          return <code className="font-mono text-xs text-slate-100" {...props}>{children}</code>;
                         }
                       }}
                     >
@@ -1350,14 +1649,30 @@ MANDATORY RULES:
                 </div>
                 
                 {msg.role === 'model' && (
-                  <div className="flex flex-wrap items-center gap-1.5 px-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-2 px-2 pt-1">
+                    {/* Dedicated Copied Button for Generated Content */}
                     <button 
-                      onClick={() => copyToClipboard(msg.content)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
-                      title="Copy response"
+                      onClick={() => handleCopyContent(msg.id, msg.content)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-2xs ${
+                        copiedMessageId === msg.id
+                          ? 'bg-emerald-600 text-white border border-emerald-600 ring-2 ring-emerald-400/30'
+                          : 'bg-purple-50 hover:bg-purple-100 text-purple-900 dark:bg-purple-950/50 dark:text-purple-200 border border-purple-200 dark:border-purple-800'
+                      }`}
+                      title="Copy generated research content to clipboard"
                     >
-                      <Copy className="w-4 h-4" />
+                      {copiedMessageId === msg.id ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-purple-900 dark:text-purple-200" />
+                          <span>Copy Content</span>
+                        </>
+                      )}
                     </button>
+
                     <button 
                       className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
                       title="Regenerate"
@@ -1401,6 +1716,54 @@ MANDATORY RULES:
               </div>
             </div>
           ))}
+
+          {messages.length === 1 && !isLoading && (
+            <div className="pt-2 pl-12 pr-4">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span>Quick Scientific Topics (LaTeX Formulations)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-3xl">
+                {[
+                  {
+                    title: 'Thermodynamics & Gibbs Free Energy',
+                    formula: '$\\Delta G^\\circ = -RT \\ln K_{eq}$',
+                    prompt: 'Explain the thermodynamic derivation of Gibbs Free Energy and equilibrium constant, including temperature dependence, enthalpy-entropy compensation, and the Van \'t Hoff equation. Express all formulas in LaTeX.'
+                  },
+                  {
+                    title: 'Enzyme Kinetics & Michaelis-Menten',
+                    formula: '$v = \\frac{V_{\\max}[S]}{K_m + [S]}$',
+                    prompt: 'Derive and analyze the Michaelis-Menten enzyme kinetics equation and Lineweaver-Burk double-reciprocal formulation. Write every scientific formula in LaTeX.'
+                  },
+                  {
+                    title: 'Quantum Wave Mechanics',
+                    formula: '$\\hat{H}\\Psi = E\\Psi$',
+                    prompt: 'Provide a comprehensive academic breakdown of the time-independent Schrödinger equation, Hamiltonian operator, and particle in a 1D box. Format every mathematical expression and derivation in LaTeX.'
+                  },
+                  {
+                    title: 'Photosynthesis & Redox Energetics',
+                    formula: '$\\mathrm{6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2}$',
+                    prompt: 'Detail the stoichiometry, redox potential, Z-scheme energetics, and photophosphorylation of oxygenic photosynthesis, expressing all chemical equations in LaTeX.'
+                  }
+                ].map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInput(item.prompt);
+                    }}
+                    className="p-3 text-left bg-slate-50 hover:bg-purple-50/80 border border-slate-200 hover:border-purple-300 rounded-xl transition-all group cursor-pointer shadow-2xs"
+                  >
+                    <div className="text-xs font-semibold text-slate-800 group-hover:text-purple-900 flex items-center justify-between gap-1">
+                      <span>{item.title}</span>
+                    </div>
+                    <p className="text-[11px] text-purple-700 dark:text-purple-400 font-mono mt-0.5">{item.formula}</p>
+                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-1">{item.prompt}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {isLoading && (
             <div className="flex gap-4">
               <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0">
@@ -1573,6 +1936,29 @@ MANDATORY RULES:
           </div>
         </div>
       </div>
+
+      {/* Interactive Evidence Matrix Modal */}
+      <EvidenceMatrixView
+        isOpen={isEvidenceMatrixOpen}
+        onClose={() => setIsEvidenceMatrixOpen(false)}
+      />
+
+      {/* Claim Audit & Traceability Modal */}
+      <ClaimAuditModal
+        isOpen={isClaimAuditOpen}
+        onClose={() => setIsClaimAuditOpen(false)}
+        claims={activeAuditedClaims}
+        currentText={latestModelMessage?.content || ''}
+        onApplyFixesToText={handleApplyFixesToLatestMessage}
+      />
+
+      {/* 17-Point Pre-Submission Audit Modal */}
+      <PreSubmissionAuditModal
+        isOpen={isPreSubmissionAuditOpen}
+        onClose={() => setIsPreSubmissionAuditOpen(false)}
+        title={latestModelMessage?.content.split('\n')[0].replace(/^#+\s*/, '') || "Academic Research Dissertation"}
+        content={latestModelMessage?.content || ''}
+      />
     </div>
   );
 }

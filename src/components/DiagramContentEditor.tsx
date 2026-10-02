@@ -348,12 +348,84 @@ export function DiagramContentEditor({
               />
             </div>
 
-            {/* Coordinate info (X%, Y%) */}
-            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-              <span>Position on Diagram: X: {Math.round(currentPin.x)}%, Y: {Math.round(currentPin.y)}%</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                Tip: You can drag any pin on the diagram to reposition it!
-              </span>
+            {/* Pointer Target Position Coordinates & Reset */}
+            <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" /> Target Pointer Position
+                </span>
+                {currentPin.manuallyAdjusted ? (
+                  <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold border border-amber-500/20">
+                    Manually Adjusted
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
+                    Canonical Default
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-center">
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">X Position (%)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={Number(currentPin.x.toFixed(1))}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+                      const initX = currentPin.initialX ?? currentPin.x;
+                      const initY = currentPin.initialY ?? currentPin.y;
+                      updatePin(currentPin.id, {
+                        x: val,
+                        initialX: initX,
+                        initialY: initY,
+                        manuallyAdjusted: Math.abs(val - initX) > 0.1 || Math.abs(currentPin.y - initY) > 0.1
+                      });
+                    }}
+                    className="w-full text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">Y Position (%)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    value={Number(currentPin.y.toFixed(1))}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+                      const initX = currentPin.initialX ?? currentPin.x;
+                      const initY = currentPin.initialY ?? currentPin.y;
+                      updatePin(currentPin.id, {
+                        y: val,
+                        initialX: initX,
+                        initialY: initY,
+                        manuallyAdjusted: Math.abs(currentPin.x - initX) > 0.1 || Math.abs(val - initY) > 0.1
+                      });
+                    }}
+                    className="w-full text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none"
+                  />
+                </div>
+                <div className="sm:col-span-1 col-span-2 flex items-end">
+                  <button
+                    onClick={() => {
+                      const initX = currentPin.initialX ?? currentPin.x;
+                      const initY = currentPin.initialY ?? currentPin.y;
+                      updatePin(currentPin.id, {
+                        x: initX,
+                        y: initY,
+                        manuallyAdjusted: false
+                      });
+                    }}
+                    className="w-full py-1 px-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded transition-colors cursor-pointer"
+                  >
+                    Reset Pointer
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

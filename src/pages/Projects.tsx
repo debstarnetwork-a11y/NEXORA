@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { useAppStore } from '../store';
 import { SavedChat, SlideDeck, InfographicData, DiagramConcept } from '../types';
 import { PortalExitButton } from '../components/PortalExitButton';
@@ -349,7 +351,7 @@ export function Projects() {
                       ? 'bg-purple-900 text-white rounded-tr-none border-purple-900'
                       : 'bg-white text-slate-800 rounded-tl-none border-slate-200 shadow-sm custom-markdown'
                   }`}>
-                    {msg.role === 'user' ? msg.content : <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>}
+                    {msg.role === 'user' ? msg.content : <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[[rehypeKatex, { output: 'html' }]]}>{msg.content}</Markdown>}
                   </div>
                 </div>
               ))}

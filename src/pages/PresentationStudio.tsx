@@ -3409,7 +3409,7 @@ CRITICAL REQUIREMENT: You MUST respond ONLY with a valid, clean JSON object (no 
               {/* Option 2: PowerPoint Web & Google Slides */}
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div className="font-bold text-blue-600 dark:text-blue-400 mb-1">
-                  2. PowerPoint for the Web &amp; Google Slides (Free Online)
+                  2. PowerPoint for the Web &amp; Google Slides
                 </div>
                 <p className="mb-2">
                   You can upload your downloaded <code className="text-purple-600 dark:text-purple-300">.pptx</code> directly to PowerPoint Web or Google Slides without needing desktop software installed.

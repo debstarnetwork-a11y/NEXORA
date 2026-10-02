@@ -18,6 +18,7 @@ import {
   BacterialCellDiagram,
   DNADoubleHelixDiagram,
   HumanLungsRespiratoryDiagram,
+  HumanDigestiveSystemDiagram,
   HumanStomachDigestiveDiagram,
   SkinCrossSectionDiagram,
   HumanEarDiagram,
@@ -28,6 +29,13 @@ import {
   HumanSpermDiagram,
   AmoebaDiagram,
   ParameciumDiagram,
+  FemaleReproductiveSystemDiagram,
+  CarbonCycleDiagram,
+  NitrogenCycleDiagram,
+  MaleReproductiveSystemDiagram,
+  WaterCycleDiagram,
+  ElectricCircuitDiagram,
+  ElectromagneticSpectrumDiagram,
   DynamicCustomSvgDiagram
 } from './BiologicalScientificDiagrams';
 import { AgamaLizardDiagram } from './AgamaLizardDiagram';
@@ -54,138 +62,271 @@ export const ScientificStructureRenderer: React.FC<ScientificStructureRendererPr
     ? 'paper' 
     : (renderMode || concept.renderMode || '3d');
 
-  const type = (concept.diagramType || '').toLowerCase();
-  const title = (concept.title || '').toLowerCase();
-  const desc = (concept.description || '').toLowerCase();
-  const textCorpus = `${type} ${title} ${desc}`;
+  const type = (concept.diagramType || '').toLowerCase().trim();
+  const title = (concept.title || '').toLowerCase().trim();
+  const titleAndType = `${type} ${title}`;
 
-  // 1. Agama Lizard (Rainbow Rock Agama - Agama agama)
-  if (type === 'agama-lizard' || /\b(agama|lizard|reptile|sauropsid|squamata|agamidae)\b/.test(textCorpus)) {
-    return <AgamaLizardDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  // =========================================================================
+  // STAGE 1: DIRECT EXACT DIAGRAM-TYPE DISPATCH TABLE (Highest Priority)
+  // Ensures that when a specific diagramType is assigned, it NEVER misroutes!
+  // =========================================================================
+
+  // 1. Protozoa & Microorganisms
+  if (type === 'paramecium' || type === 'paramecium-caudatum') {
+    return <ParameciumDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
-
-  // 2. Eukaryotic Animal Cell
-  if (type === 'animal-cell' || /\banimal\s*cell\b/.test(textCorpus)) {
-    return <AnimalCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  if (type === 'amoeba' || type === 'amoeba-proteus') {
+    return <AmoebaDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
-
-  // 3. Eukaryotic Plant Cell
-  if (type === 'plant-cell' || /\bplant\s*cell\b/.test(textCorpus)) {
-    return <PlantCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  if (type === 'euglena' || type === 'euglena-protist' || type === 'euglena-gracilis' || type === 'euglena-viridis') {
+    return <EuglenaDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
-
-  // 4. Bony Fish Anatomical Morphology
-  if (type === 'bony-fish' || /\b(bony\s*fish|fish\s*anatomy|osteichthyes|operculum)\b/.test(textCorpus)) {
-    return <BonyFishDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 5. Human Heart Cardiovascular
-  if (type === 'human-heart' || /\b(heart|cardiac|myocardium|ventricle|atrium|aorta)\b/.test(textCorpus)) {
-    return <HumanHeartDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 6. Multipolar Motor Neuron
-  if (type === 'neuron' || /\b(neuron|nerve\s*cell|axon|dendrite|myelin|schwann)\b/.test(textCorpus)) {
-    return <NeuronDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 7. Human Brain Anatomical Lobes
-  if (type === 'human-brain' || /\b(brain|cerebrum|cerebellum|brainstem|frontal\s*lobe)\b/.test(textCorpus)) {
-    return <HumanBrainDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 8. Human Eye Sensory Apparatus
-  if (type === 'human-eye' || /\b(eye|retina|cornea|iris|pupil|fovea|optic\s*nerve|lens)\b/.test(textCorpus)) {
-    return <HumanEyeDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 9. Nephron / Renal Glomerulus
-  if (type === 'nephron-kidney' || /\b(nephron|glomerulus|bowman|kidney|renal|loop\s*of\s*henle)\b/.test(textCorpus)) {
-    return <NephronDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 10. Mitochondrion Ultrastructure
-  if (type === 'mitochondria' || /\b(mitochondri|cristae|atp\s*synthase|matrix)\b/.test(textCorpus)) {
-    return <MitochondrionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 11. Chloroplast Photosynthetic Machinery
-  if (type === 'chloroplast' || /\b(chloroplast|grana|thylakoid|stroma|photosynthe)\b/.test(textCorpus)) {
-    return <ChloroplastDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 12. Bacterial Cell (Prokaryote)
-  if (type === 'bacterial-cell' || /\b(bacteri|prokaryot|nucleoid|flagell|peptidoglycan)\b/.test(textCorpus)) {
+  if (type === 'bacterial-cell' || type === 'bacteria' || type === 'prokaryote') {
     return <BacterialCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
-
-  // 13. DNA Double Helix Molecular Architecture
-  if (type === 'dna-helix' || /\b(dna|double\s*helix|watson\s*crick|nucleotide|base\s*pair)\b/.test(textCorpus)) {
-    return <DNADoubleHelixDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 14. Lungs & Respiratory Branching Tree
-  if (type === 'lungs-respiratory' || /\b(lung|respirat|trachea|bronch|alveol|pulmonary)\b/.test(textCorpus)) {
-    return <HumanLungsRespiratoryDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 15. Human Stomach & Digestive Glands
-  if (type === 'stomach-digestive' || /\b(stomach|gastric|digest|rugae|pylor|fundus)\b/.test(textCorpus)) {
-    return <HumanStomachDigestiveDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 16. Skin Integumentary Layers
-  if (type === 'skin-anatomy' || /\b(skin|epidermis|dermis|hypodermis|hair\s*follicle|integument)\b/.test(textCorpus)) {
-    return <SkinCrossSectionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 17. Human Ear Auditory Apparatus
-  if (type === 'human-ear' || /\b(ear|pinna|cochlea|tympanic|ossicle|eardrum|auditory)\b/.test(textCorpus)) {
-    return <HumanEarDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 18. Flower Angiosperm Reproductive Anatomy
-  if (type === 'flower-anatomy' || /\b(flower|angiosperm|petal|stamen|anther|carpel|pistil|stigma|ovary)\b/.test(textCorpus)) {
-    return <FlowerAnatomyDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
-  }
-
-  // 19. T4 Bacteriophage Complex
-  if (type === 'bacteriophage' || /\b(phage|bacteriophage|capsid|t4\s*virus|tail\s*fiber)\b/.test(textCorpus)) {
+  if (type === 'bacteriophage' || type === 't4-phage') {
     return <BacteriophageDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
 
-  // 20. Stratovolcano Subterranean Magma Chamber
-  if (type === 'volcano' || /\b(volcano|magma|lava|crater|conduit|caldera|eruption)\b/.test(textCorpus)) {
-    return <VolcanoCrossSectionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  // 2. Reproductive & Gamete Anatomy
+  if (type === 'female-reproductive-system' || type === 'female-reproductive' || type === 'female-reproductive-organs') {
+    return <FemaleReproductiveSystemDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
-
-  // 21. Euglena Viridis / Gracilis Flagellated Protist
-  if (type === 'euglena' || type === 'euglena-protist' || /\b(euglena|euglenoid|euglenophyta|euglena\s*gracilis|euglena\s*viridis|mastigophora|flagellate\s*protist)\b/.test(textCorpus)) {
-    return <EuglenaDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  if (type === 'male-reproductive-system' || type === 'male-reproductive' || type === 'male-reproductive-organs') {
+    return <MaleReproductiveSystemDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
-
-  // High-Resolution Human Sperm (Spermatozoon / Male Gamete)
-  if (type === 'human-sperm' || /\b(sperm|spermatozo|spermatozoon|male\s*gamete|acrosome|axoneme|spermatid)\b/.test(textCorpus)) {
+  if (type === 'human-sperm' || type === 'sperm' || type === 'spermatozoon') {
     return <HumanSpermDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
 
-  // 22. Amoeba Proteus Sarcodina / Rhizopod
-  if (type === 'amoeba' || type === 'amoeba-proteus' || /\b(amoeba|ameba|amoeba\s*proteus|pseudopod|lobopod|sarcodina|rhizopod)\b/.test(textCorpus)) {
-    return <AmoebaDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  // 3. Human Organ Systems
+  if (type === 'human-heart' || type === 'heart') {
+    return <HumanHeartDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'neuron' || type === 'motor-neuron' || type === 'nerve-cell') {
+    return <NeuronDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'human-brain' || type === 'brain') {
+    return <HumanBrainDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'human-eye' || type === 'eye') {
+    return <HumanEyeDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'human-ear' || type === 'ear') {
+    return <HumanEarDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'nephron-kidney' || type === 'nephron' || type === 'kidney') {
+    return <NephronDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'lungs-respiratory' || type === 'lungs' || type === 'respiratory-system') {
+    return <HumanLungsRespiratoryDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'digestive-system' || type === 'human-digestive-system' || type === 'digestive' || type === 'gastrointestinal') {
+    return <HumanDigestiveSystemDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'stomach-digestive' || type === 'stomach') {
+    return <HumanStomachDigestiveDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'skin-anatomy' || type === 'skin-cross-section' || type === 'skin') {
+    return <SkinCrossSectionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
 
-  // 23. Paramecium Caudatum Ciliated Protist
-  if (type === 'paramecium' || type === 'paramecium-caudatum' || /\b(parameci|paramecium|paramecium\s*caudatum|ciliate|ciliophora)\b/.test(textCorpus)) {
+  // 4. Cellular Biology & Organelles
+  if (type === 'animal-cell') {
+    return <AnimalCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'plant-cell') {
+    return <PlantCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'mitochondria' || type === 'mitochondrion') {
+    return <MitochondrionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'chloroplast') {
+    return <ChloroplastDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'dna-helix' || type === 'dna') {
+    return <DNADoubleHelixDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 5. Zoology & Botany
+  if (type === 'bony-fish' || type === 'fish') {
+    return <BonyFishDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'agama-lizard' || type === 'lizard') {
+    return <AgamaLizardDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'flower-anatomy' || type === 'flower') {
+    return <FlowerAnatomyDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 6. Earth & Physical Cycles / Physics / Chemistry
+  if (type === 'carbon-cycle' || type === 'global-carbon-cycle') {
+    return <CarbonCycleDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'nitrogen-cycle') {
+    return <NitrogenCycleDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'water-cycle' || type === 'hydrological-cycle') {
+    return <WaterCycleDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'volcano') {
+    return <VolcanoCrossSectionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'electric-circuit' || type === 'circuit') {
+    return <ElectricCircuitDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'electromagnetic-spectrum' || type === 'em-spectrum') {
+    return <ElectromagneticSpectrumDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (type === 'hydrocarbon-alkanes' || type === 'hydrocarbons') {
+    return <HydrocarbonsDiagram isPaperMode={isPaperMode} />;
+  }
+  if (type === 'bohr-atom' || type === 'atom') {
+    return <BohrAtomDiagram isPaperMode={isPaperMode} />;
+  }
+
+  // =========================================================================
+  // STAGE 2: PRECISE TITLE MATCHING (For user custom queries or fallback titles)
+  // We match ONLY against the title and type keywords, NOT generic paragraphs!
+  // =========================================================================
+
+  // 1. Paramecium & Ciliates
+  if (/\b(parameci|paramecium|ciliate|ciliophora)\b/i.test(titleAndType)) {
     return <ParameciumDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
   }
 
-  // 24. Alkanes & Saturated Hydrocarbons
-  if (type === 'hydrocarbon-alkanes' || /\b(alkane|hydrocarbon|ethane|propane)\b/.test(textCorpus)) {
+  // 2. Amoeba & Sarcodines
+  if (/\b(amoeba|ameba|pseudopod|sarcodina|rhizopod)\b/i.test(titleAndType)) {
+    return <AmoebaDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 3. Euglena & Flagellates
+  if (/\b(euglena|euglenoid|euglenophyta|flagellate\s*protist)\b/i.test(titleAndType)) {
+    return <EuglenaDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 4. Female Reproductive System
+  if (/\b(female\s*reproductive|uterus|womb|fallopian|oviduct|fimbriae|endometrium|myometrium|cervix|vagina|ovaries|ovary|graafian\s*follicle)\b/i.test(titleAndType)) {
+    return <FemaleReproductiveSystemDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 5. Male Reproductive System
+  if (/\b(male\s*reproductive|testis|testes|vas\s*deferens|scrotum|prostate|seminal\s*vesicle|epididymis)\b/i.test(titleAndType)) {
+    return <MaleReproductiveSystemDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 6. Human Sperm
+  if (/\b(sperm|spermatozoon|spermatozoa|sperm\s*cell|male\s*gamete|acrosome|spermatid|spermiogenesis)\b/i.test(titleAndType)) {
+    return <HumanSpermDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 7. Human Heart
+  if (/\b(heart|cardiac|myocardium|ventricle|atrium|aorta|cardiovascular)\b/i.test(titleAndType)) {
+    return <HumanHeartDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 8. Motor Neuron
+  if (/\b(neuron|nerve\s*cell|axon|dendrite|myelin|schwann|synapse)\b/i.test(titleAndType)) {
+    return <NeuronDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 9. Human Brain
+  if (/\b(brain|cerebrum|cerebellum|brainstem|frontal\s*lobe|cortex)\b/i.test(titleAndType)) {
+    return <HumanBrainDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 10. Human Eye
+  if (/\b(eye|retina|cornea|iris|pupil|fovea|optic\s*nerve|lens|sclera)\b/i.test(titleAndType)) {
+    return <HumanEyeDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 11. Human Ear
+  if (/\b(ear|pinna|cochlea|tympanic|ossicle|eardrum|auditory)\b/i.test(titleAndType)) {
+    return <HumanEarDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 12. Nephron & Kidney
+  if (/\b(nephron|glomerulus|bowman|kidney|renal|loop\s*of\s*henle)\b/i.test(titleAndType)) {
+    return <NephronDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 13. Lungs & Respiratory
+  if (/\b(lung|respirat|trachea|bronch|alveol|pulmonary|pleura)\b/i.test(titleAndType)) {
+    return <HumanLungsRespiratoryDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 14. Digestive System & Stomach
+  if (/\b(stomach|gastric|rugae|pylor)\b/i.test(titleAndType)) {
+    return <HumanStomachDigestiveDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(digestive|alimentary|gastrointestinal|gut\s*anatomy|colon|intestine)\b/i.test(titleAndType)) {
+    return <HumanDigestiveSystemDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 15. Skin / Integumentary (Strict match on title/type only!)
+  if (/\b(skin\s*cross|skin\s*layer|human\s*skin|skin\s*anatomy|integument|epidermis\s*and\s*dermis|hair\s*follicle\s*structure)\b/i.test(titleAndType)) {
+    return <SkinCrossSectionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 16. Animal & Plant Cells & Organelles
+  if (/\banimal\s*cell\b/i.test(titleAndType)) {
+    return <AnimalCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\bplant\s*cell\b/i.test(titleAndType)) {
+    return <PlantCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(mitochondri|cristae|matrix)\b/i.test(titleAndType)) {
+    return <MitochondrionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(chloroplast|grana|thylakoid|stroma)\b/i.test(titleAndType)) {
+    return <ChloroplastDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(dna|double\s*helix|watson\s*crick)\b/i.test(titleAndType)) {
+    return <DNADoubleHelixDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(bacteri|prokaryot|nucleoid)\b/i.test(titleAndType)) {
+    return <BacterialCellDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(phage|bacteriophage|capsid)\b/i.test(titleAndType)) {
+    return <BacteriophageDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 17. Animals & Plants
+  if (/\b(bony\s*fish|fish\s*anatomy|osteichthyes|operculum)\b/i.test(titleAndType)) {
+    return <BonyFishDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(agama|lizard|reptile|sauropsid)\b/i.test(titleAndType)) {
+    return <AgamaLizardDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(flower|angiosperm|petal|stamen|carpel|pistil|anther)\b/i.test(titleAndType)) {
+    return <FlowerAnatomyDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+
+  // 18. Physical Cycles & Forces
+  if (/\b(carbon\s*cycle|biogeochemical\s*carbon)\b/i.test(titleAndType)) {
+    return <CarbonCycleDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(nitrogen\s*cycle|nitrogen\s*fixation)\b/i.test(titleAndType)) {
+    return <NitrogenCycleDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(water\s*cycle|hydrologic\s*cycle|hydrological\s*cycle)\b/i.test(titleAndType)) {
+    return <WaterCycleDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(volcano|magma|crater|conduit)\b/i.test(titleAndType)) {
+    return <VolcanoCrossSectionDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(electric\s*circuit|circuit\s*diagram|ohms?\s*law|schematic\s*circuit)\b/i.test(titleAndType)) {
+    return <ElectricCircuitDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(electromagnetic\s*spectrum|em\s*spectrum|light\s*spectrum)\b/i.test(titleAndType)) {
+    return <ElectromagneticSpectrumDiagram isPaperMode={isPaperMode} renderMode={effectiveRenderMode} activePinId={activePinId} />;
+  }
+  if (/\b(alkane|hydrocarbon|ethane|propane)\b/i.test(titleAndType)) {
     return <HydrocarbonsDiagram isPaperMode={isPaperMode} />;
   }
 
-  // 21. Methane Molecule (CH₄)
-  if (type === 'methane-molecule' || /\bmethane\b/.test(textCorpus)) {
+  // Methane Molecule (CH₄)
+  if (type === 'methane-molecule' || /\bmethane\b/i.test(titleAndType)) {
     return (
       <g id="methane-structure-renderer" transform="translate(0, 0)">
         {isPaperMode ? (
@@ -238,8 +379,8 @@ export const ScientificStructureRenderer: React.FC<ScientificStructureRendererPr
     );
   }
 
-  // 22. Water Molecule (H₂O)
-  if (type === 'water-molecule' || /\b(water\s*molecule|h2o)\b/.test(textCorpus)) {
+  // Water Molecule (H₂O)
+  if (type === 'water-molecule' || /\b(water\s*molecule|h2o)\b/i.test(titleAndType)) {
     return (
       <g id="water-structure-renderer" transform="translate(0, 0)">
         {isPaperMode ? (
@@ -281,17 +422,21 @@ export const ScientificStructureRenderer: React.FC<ScientificStructureRendererPr
     );
   }
 
-  // 23. Rutherford-Bohr Quantized Atom
-  if (type === 'bohr-atom' || /\b(bohr|rutherford|electron\s*orbital|quantum\s*shell)\b/.test(textCorpus)) {
+  // Rutherford-Bohr Quantized Atom
+  if (type === 'bohr-atom' || /\b(bohr|rutherford|electron\s*orbital|quantum\s*shell)\b/i.test(titleAndType)) {
     return <BohrAtomDiagram isPaperMode={isPaperMode} />;
   }
 
-  // 24. AI-Generated Dynamic Custom SVG (If customSvgCode is present in concept)
+  // =========================================================================
+  // STAGE 3: DYNAMIC AI-GENERATED CUSTOM SVG CODE
+  // =========================================================================
   if (concept.customSvgCode && concept.customSvgCode.trim().length > 0) {
     return <DynamicCustomSvgDiagram svgCode={concept.customSvgCode} isPaperMode={isPaperMode} />;
   }
 
-  // 25. Default Authentic Scientific Cross-Section Schematic (Rich, anatomical fallback instead of blank concentric circles)
+  // =========================================================================
+  // STAGE 4: DEFAULT SCIENTIFIC SCHEMATIC (Graceful, high-contrast fallback)
+  // =========================================================================
   return (
     <g id="authentic-scientific-schematic" transform="translate(0, 0)">
       {/* Outer Specimen Capsule / Membrane Boundary */}

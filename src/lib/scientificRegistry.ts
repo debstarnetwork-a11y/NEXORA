@@ -1,4 +1,4 @@
-import { DiagramConcept, LabelPin } from '../types';
+import { DiagramConcept, LabelPin, DiagramSourceAttribution } from '../types';
 
 export interface ScientificPresetConfig {
   diagramType: string;
@@ -9,6 +9,7 @@ export interface ScientificPresetConfig {
   subtitle: string;
   description: string;
   funFact: string;
+  sourceAttribution?: DiagramSourceAttribution;
   pins: LabelPin[];
 }
 
@@ -1688,127 +1689,72 @@ export const SCIENTIFIC_PRESETS_REGISTRY: Record<string, ScientificPresetConfig>
     category: 'Biology & Cells',
     domain: 'biological',
     defaultRenderMode: '3d',
-    title: 'Euglena Viridis / Gracilis (Flagellated Protist)',
-    subtitle: 'Cytology: Pellicle, Whiplash flagellum, stigma eyespot, reservoir, contractile vacuole, nucleus & chloroplasts',
-    description: 'Authoritative cytological diagram of Euglena illustrating fusiform spindle-shaped body enclosed by helical pellicular protein strips, anterior flask-shaped reservoir (ampulla) and cytostome, long emergent locomotory flagellum with photoreceptor swelling, red carotenoid eyespot (stigma), osmoregulatory contractile vacuole with radiating collecting canals, prominent rose-pink nucleus with central magenta nucleolus (endosome), rough and smooth endoplasmic reticulum, Golgi apparatus, mitochondria with cristae, lysosomes, ribosomes, lobed chloroplasts with pyrenoids for autotrophy, and dark purple paramylon starch storage bodies for heterotrophy.',
-    funFact: 'Euglena is a textbook mixotroph: it performs photosynthesis in light using chloroplasts, but in prolonged darkness, it sheds pigments and feeds heterotrophically by absorbing dissolved nutrients through its pellicle.',
+    title: 'Euglena (Flagellated Protist)',
+    subtitle: 'Cytology: Pellicle, Whiplash Flagellum, Stigma eyespot, Reservoir, Contractile vacuole, Nucleus, Chloroplasts & Paramylon',
+    description: 'Authoritative cytological diagram of Euglena illustrating fusiform spindle-shaped body enclosed by helical pellicular protein strips with pointed posterior apex, anterior flask-shaped reservoir (ampulla) with prominent long whip-like locomotory flagellum sweeping upwards and outwards with mastigonemes, red carotenoid eyespot (stigma), photoreceptor (paraflagellar body), osmoregulatory contractile vacuole with radiating collecting canals, prominent nucleus with central spherical nucleolus, rough and smooth endoplasmic reticulum, Golgi apparatus, mitochondria with cristae, lysosomes, ribosomes, lobed chloroplasts with pyrenoids for autotrophy, and dark purple paramylon starch storage bodies for heterotrophy.',
+    funFact: 'Euglena is a mixotroph: it performs photosynthesis in light using chloroplasts, but in prolonged darkness, it sheds pigments and feeds heterotrophically by absorbing dissolved nutrients through its pellicle.',
     pins: [
       {
-        id: 'p-eug-cytoplasm',
+        id: 'p-eug-flagellum',
         number: 1,
-        name: 'Cytoplasm',
-        x: 50,
-        y: 66,
-        color: '#16A34A',
-        category: 'Cellular Matrix',
-        functionSummary: 'Fluid ground substance (cytosol) containing metabolic enzymes and suspending all organelles.',
-        detailedNotes: 'Divides into an outer gel-like ectoplasm beneath the pellicle and an inner sol-like granular endoplasm.'
-      },
-      {
-        id: 'p-eug-chloroplast',
-        number: 2,
-        name: 'Chloroplast',
-        x: 41,
-        y: 53,
-        color: '#22C55E',
-        category: 'Photosynthesis',
-        functionSummary: 'Emerald-green plastids carrying chlorophylls a & b that capture light energy to synthesize glucose.',
-        detailedNotes: 'Derived through secondary endosymbiosis of a green alga; features three enclosing membranes and central pyrenoid caps.'
-      },
-      {
-        id: 'p-eug-nucleolus',
-        number: 3,
-        name: 'Nucleolus (Endosome)',
-        x: 49,
-        y: 53,
-        color: '#C026D3',
-        category: 'Ribosome Synthesis',
-        functionSummary: 'Dense persistent endosome producing ribosomal RNA (rRNA) and assembling ribosome subunits.',
-        detailedNotes: 'Remains intact during closed cryptomitotic cell division, elongating and constricting without dissolving.'
-      },
-      {
-        id: 'p-eug-nucleus',
-        number: 4,
-        name: 'Nucleus',
-        x: 49,
-        y: 53,
-        color: '#F43F5E',
-        category: 'Genetic Control',
-        functionSummary: 'Spherical double-membrane bounded organelle governing all metabolic activity and genetic reproduction.',
-        detailedNotes: 'Enclosed by a double nuclear membrane with nuclear pores, containing linear chromosomes and granular chromatin.'
-      },
-      {
-        id: 'p-eug-mitochondria',
-        number: 5,
-        name: 'Mitochondria',
-        x: 43,
-        y: 35,
-        color: '#EF4444',
-        category: 'Bioenergetics',
-        functionSummary: 'Powerhouse organelles generating ATP through aerobic cellular respiration and oxidative phosphorylation.',
-        detailedNotes: 'Possesses discoid mitochondrial cristae characteristic of discicristate excavate protists.'
-      },
-      {
-        id: 'p-eug-ribosomes',
-        number: 6,
-        name: 'Ribosomes',
-        x: 46,
-        y: 34,
-        color: '#1E293B',
-        category: 'Protein Synthesis',
-        functionSummary: 'Dense 80S ribonucleoprotein particles translating mRNA transcripts into polypeptide chains.',
-        detailedNotes: 'Found free in the cytosol as well as membrane-bound on the rough endoplasmic reticulum.'
-      },
-      {
-        id: 'p-eug-golgi',
-        number: 7,
-        name: 'Golgi Apparatus',
-        x: 47,
-        y: 46,
-        color: '#EC4899',
-        category: 'Protein Processing',
-        functionSummary: 'Curved stacks of membrane-bound cisternae that modify, sort, and package glycoproteins into secretory vesicles.',
-        detailedNotes: 'Buds transport vesicles delivering proteins to the pellicle, reservoir, and lysosomes.'
-      },
-      {
-        id: 'p-eug-reservoir',
-        number: 8,
-        name: 'Reservoir (Ampulla)',
-        x: 50,
-        y: 31,
-        color: '#0284C7',
-        category: 'Anterior Chamber',
-        functionSummary: 'Flask-shaped anterior invagination anchoring flagella and receiving osmoregulatory discharge.',
-        detailedNotes: 'Opens to the exterior via the cytostome aperture; does not participate in phagotrophic ingestion in autotrophic euglenids.'
+        name: 'Long Whiplash Flagellum',
+        x: 15,
+        y: 41,
+        color: '#10B981',
+        category: 'Locomotion & Propulsion',
+        functionSummary: 'Long, whip-like undulating locomotory organelle driven by a 9+2 microtubule axoneme with lateral mastigoneme hairlets.',
+        detailedNotes: 'Emerges from the anterior reservoir and generates helical rotational waves that pull Euglena through aquatic environments.'
       },
       {
         id: 'p-eug-eyespot',
-        number: 9,
+        number: 2,
         name: 'Eyespot (Stigma)',
-        x: 46,
-        y: 28,
+        x: 51,
+        y: 23,
         color: '#DC2626',
         category: 'Photoreception Shield',
         functionSummary: 'Crimson carotenoid pigment shield shading the photoreceptor for directional phototaxis.',
         detailedNotes: 'Consists of lipid droplets rich in astaxanthin and beta-carotene that cast an optical shadow as the cell rotates.'
       },
       {
-        id: 'p-eug-flagellum',
-        number: 10,
-        name: 'Whiplash Locomotory Flagellum',
-        x: 26,
-        y: 16,
-        color: '#22C55E',
-        category: 'Locomotion',
-        functionSummary: 'Long whiplike emergent axoneme beating in sinusoidal waves to pull Euglena through water.',
-        detailedNotes: 'Features a classic 9+2 microtubular axoneme reinforced by a paraxial rod and fine mastigoneme hairs.'
+        id: 'p-eug-photoreceptor',
+        number: 3,
+        name: 'Photoreceptor (Paraflagellar Body)',
+        x: 53,
+        y: 21,
+        color: '#EA580C',
+        category: 'Light Sensor',
+        functionSummary: 'Light-sensitive crystalline swelling at the base of the long flagellum inside the reservoir.',
+        detailedNotes: 'Contains flavin chromophores that transduce photon signals into flagellar wave modulation for positive phototaxis.'
+      },
+      {
+        id: 'p-eug-reservoir',
+        number: 4,
+        name: 'Reservoir (Ampulla & Cytostome)',
+        x: 54,
+        y: 19,
+        color: '#0284C7',
+        category: 'Anterior Chamber',
+        functionSummary: 'Flask-shaped anterior invagination anchoring flagella and receiving osmoregulatory discharge.',
+        detailedNotes: 'Opens to the exterior via the cytostome aperture; does not participate in phagotrophic ingestion in autotrophic euglenids.'
+      },
+      {
+        id: 'p-eug-contractile-vacuole',
+        number: 5,
+        name: 'Contractile Vacuole',
+        x: 45,
+        y: 27,
+        color: '#38BDF8',
+        category: 'Osmoregulation',
+        functionSummary: 'Pulsatile spherical vesicle with star-like radiating collecting canals that expels excess water.',
+        detailedNotes: 'Prevents osmotic lysis in hypotonic freshwater habitats by discharging fluid cyclically into the reservoir.'
       },
       {
         id: 'p-eug-pellicle',
-        number: 11,
+        number: 6,
         name: 'Pellicle',
         x: 62,
-        y: 48,
+        y: 57,
         color: '#166534',
         category: 'Cell Envelope',
         functionSummary: 'Flexible proteinaceous layer beneath plasma membrane allowing euglenoid movement (metaboly).',
@@ -1816,32 +1762,76 @@ export const SCIENTIFIC_PRESETS_REGISTRY: Record<string, ScientificPresetConfig>
       },
       {
         id: 'p-eug-plasma-membrane',
-        number: 12,
+        number: 7,
         name: 'Plasma Membrane',
         x: 61,
-        y: 51,
+        y: 57,
         color: '#15803D',
         category: 'Cell Boundary',
         functionSummary: 'Selectively permeable lipid bilayer controlling ion fluxes and nutrient exchange.',
         detailedNotes: 'Forms the outer fluid-mosaic envelope intimately fused with the underlying pellicular strips.'
       },
       {
+        id: 'p-eug-chloroplast',
+        number: 8,
+        name: 'Chloroplast',
+        x: 58,
+        y: 48,
+        color: '#22C55E',
+        category: 'Photosynthesis',
+        functionSummary: 'Emerald-green plastids carrying chlorophylls a & b that capture light energy to synthesize glucose.',
+        detailedNotes: 'Derived through secondary endosymbiosis of a green alga; features three enclosing membranes and central pyrenoid caps.'
+      },
+      {
         id: 'p-eug-paramylon',
-        number: 13,
-        name: 'Paramylon',
-        x: 48,
-        y: 61,
+        number: 9,
+        name: 'Paramylon Reserve Granule',
+        x: 55,
+        y: 44,
         color: '#7C3AED',
         category: 'Carbohydrate Storage',
         functionSummary: 'Refractile crystalline reserve granules composed of unbranched β-1,3-glucan polymer.',
         detailedNotes: 'Enables survival in prolonged dark environments without degrading chlorophyll reserves.'
       },
       {
+        id: 'p-eug-nucleus',
+        number: 10,
+        name: 'Nucleus',
+        x: 46,
+        y: 50,
+        color: '#F43F5E',
+        category: 'Genetic Control',
+        functionSummary: 'Spherical double-membrane bounded organelle governing all metabolic activity and genetic reproduction.',
+        detailedNotes: 'Enclosed by a double nuclear membrane with nuclear pores, containing linear chromosomes and granular chromatin.'
+      },
+      {
+        id: 'p-eug-nucleolus',
+        number: 11,
+        name: 'Nucleolus',
+        x: 50,
+        y: 50,
+        color: '#C026D3',
+        category: 'Ribosome Synthesis',
+        functionSummary: 'Dense subnuclear structure synthesizing ribosomal RNA (rRNA) and assembling ribosome subunits.',
+        detailedNotes: 'Maintains active transcription of pre-rRNA genes; distinct from cytoplasmic endosomal compartments.'
+      },
+      {
+        id: 'p-eug-golgi',
+        number: 12,
+        name: 'Golgi Apparatus',
+        x: 45,
+        y: 55,
+        color: '#EC4899',
+        category: 'Protein Processing',
+        functionSummary: 'Curved stacks of membrane-bound cisternae that modify, sort, and package glycoproteins into secretory vesicles.',
+        detailedNotes: 'Buds transport vesicles delivering proteins to the pellicle, reservoir, and lysosomes.'
+      },
+      {
         id: 'p-eug-smooth-er',
-        number: 14,
+        number: 13,
         name: 'Smooth Endoplasmic Reticulum',
         x: 55,
-        y: 53,
+        y: 56,
         color: '#F59E0B',
         category: 'Lipid Synthesis',
         functionSummary: 'Tubular membranous network synthesizing lipids, phospholipids, and steroid derivatives.',
@@ -1849,47 +1839,214 @@ export const SCIENTIFIC_PRESETS_REGISTRY: Record<string, ScientificPresetConfig>
       },
       {
         id: 'p-eug-rough-er',
-        number: 15,
+        number: 14,
         name: 'Rough Endoplasmic Reticulum',
-        x: 54,
-        y: 53,
+        x: 47,
+        y: 56,
         color: '#D97706',
         category: 'Protein Processing',
         functionSummary: 'Flattened cisternae studded with ribosomes for synthesizing membrane and secretory proteins.',
         detailedNotes: 'Directly continuous with the outer nuclear membrane envelope.'
       },
       {
+        id: 'p-eug-mitochondria',
+        number: 15,
+        name: 'Mitochondria',
+        x: 53,
+        y: 42,
+        color: '#EF4444',
+        category: 'Bioenergetics',
+        functionSummary: 'Powerhouse organelles generating ATP through aerobic cellular respiration and oxidative phosphorylation.',
+        detailedNotes: 'Possesses discoid mitochondrial cristae characteristic of discicristate excavate protists.'
+      },
+      {
         id: 'p-eug-lysosomes',
         number: 16,
         name: 'Lysosomes',
         x: 53,
-        y: 60,
+        y: 54,
         color: '#9333EA',
         category: 'Intracellular Digestion',
         functionSummary: 'Hydrolytic enzyme-filled vesicles degrading worn-out organelles (autophagy) and macromolecules.',
         detailedNotes: 'Maintains an acidic luminal pH (~4.5–5.0) for optimal acid hydrolase activity.'
       },
       {
-        id: 'p-eug-contractile-vacuole',
+        id: 'p-eug-cytoplasm',
         number: 17,
-        name: 'Contractile Vacuole',
-        x: 55,
-        y: 29,
-        color: '#0284C7',
-        category: 'Osmoregulation',
-        functionSummary: 'Pulsatile spherical vesicle with star-like radiating collecting canals that expels excess water.',
-        detailedNotes: 'Prevents osmotic lysis in hypotonic freshwater habitats by discharging fluid cyclically into the reservoir.'
+        name: 'Cytoplasm (Cytosol)',
+        x: 48,
+        y: 63,
+        color: '#16A34A',
+        category: 'Cellular Matrix',
+        functionSummary: 'Fluid ground substance (cytosol) containing metabolic enzymes and suspending all organelles.',
+        detailedNotes: 'Divides into an outer gel-like ectoplasm beneath the pellicle and an inner sol-like granular endoplasm.'
+      }
+    ]
+  },
+
+  'digestive-system': {
+    diagramType: 'digestive-system',
+    category: 'Human Anatomy',
+    domain: 'biological',
+    defaultRenderMode: '3d',
+    title: 'Human Digestive System (Gastrointestinal Tract & Glands)',
+    subtitle: 'Complete Alimentary Canal: Oral cavity, esophagus, stomach, liver, gallbladder, pancreas, small intestine, colon & rectum',
+    description: 'Comprehensive medical anatomical figure of the human digestive system illustrating the complete alimentary tract from mouth to rectum alongside key accessory digestive organs including the dual-lobed liver, bile-storing gallbladder with cystic duct, exocrine pancreas with pancreatic duct, duodenal C-loop, folded small intestines, ascending/transverse/descending/sigmoid colon, cecum, and vermiform appendix.',
+    funFact: 'The human gastrointestinal tract is approximately 9 meters (30 feet) long from mouth to anus, with the small intestine providing an absorptive surface area roughly equal to the size of a tennis court due to circular plicae, villi, and microvilli.',
+    pins: [
+      {
+        id: 'p-dig-oral-cavity',
+        number: 1,
+        name: 'Oral Cavity & Pharynx',
+        x: 50,
+        y: 11,
+        color: '#E11D48',
+        category: 'Ingestion & Mastication',
+        functionSummary: 'Site of mechanical mastication by teeth and initial chemical digestion of starches by salivary amylase.',
+        detailedNotes: 'Bounded by hard/soft palates, tongue, and pharyngeal arches; coordinates swallowing reflex into the esophagus.'
       },
       {
-        id: 'p-eug-photoreceptor',
-        number: 18,
-        name: 'Photoreceptor (Paraflagellar Body)',
+        id: 'p-dig-salivary-glands',
+        number: 2,
+        name: 'Salivary Glands (Parotid & Submandibular)',
+        x: 56,
+        y: 14,
+        color: '#F59E0B',
+        category: 'Digestive Secretion',
+        functionSummary: 'Exocrine glands secreting saliva containing salivary amylase (ptyalin), lingual lipase, mucin, and lysozyme.',
+        detailedNotes: 'Comprises paired parotid, submandibular, and sublingual glands producing ~1 to 1.5 liters of saliva daily.'
+      },
+      {
+        id: 'p-dig-esophagus',
+        number: 3,
+        name: 'Esophagus',
+        x: 51,
+        y: 22,
+        color: '#F43F5E',
+        category: 'Propulsion',
+        functionSummary: 'Muscular tube transporting food boluses from the pharynx to the stomach via coordinated peristaltic contractions.',
+        detailedNotes: 'Traverses posterior mediastinum and pierces the diaphragm at esophageal hiatus (T10 level); lined with stratified squamous epithelium.'
+      },
+      {
+        id: 'p-dig-liver',
+        number: 4,
+        name: 'Liver (Right & Left Lobes)',
+        x: 41,
+        y: 35,
+        color: '#991B1B',
+        category: 'Accessory Organ & Metabolism',
+        functionSummary: 'Largest internal organ producing bile salts, detoxifying metabolic wastes, and storing glycogen, vitamins, and iron.',
+        detailedNotes: 'Separated into right and left lobes by falciform ligament; processes nutrient-rich venous blood from the hepatic portal vein.'
+      },
+      {
+        id: 'p-dig-stomach',
+        number: 5,
+        name: 'Stomach (Fundus, Body & Rugae)',
+        x: 58,
+        y: 36,
+        color: '#DC2626',
+        category: 'Chemical Digestion & Churning',
+        functionSummary: 'J-shaped muscular organ churning bolus into chyme using gastric juice containing hydrochloric acid (HCl) and pepsinogen.',
+        detailedNotes: 'Features gastric rugae folds allowing expansion up to 2-4 liters; parietal cells secrete HCl (pH 1.5-2.0) and intrinsic factor.'
+      },
+      {
+        id: 'p-dig-gallbladder',
+        number: 6,
+        name: 'Gallbladder & Bile Ducts',
+        x: 45,
+        y: 41,
+        color: '#16A34A',
+        category: 'Bile Storage & Delivery',
+        functionSummary: 'Pear-shaped sac concentrating and storing hepatic bile, contracting under CCK stimulation to emulsify dietary lipids.',
+        detailedNotes: 'Releases concentrated bile through the cystic duct joining the common hepatic duct to form the common bile duct.'
+      },
+      {
+        id: 'p-dig-pancreas',
+        number: 7,
+        name: 'Pancreas & Pancreatic Duct',
+        x: 54,
+        y: 44,
+        color: '#D97706',
+        category: 'Enzyme & Bicarbonate Secretion',
+        functionSummary: 'Retroperitoneal dual organ secreting digestive enzymes (trypsin, lipase, amylase) and alkaline bicarbonate (HCO₃⁻).',
+        detailedNotes: 'Empties pancreatic juice into duodenum via duct of Wirsung; endocrine islets of Langerhans secrete insulin and glucagon.'
+      },
+      {
+        id: 'p-dig-duodenum',
+        number: 8,
+        name: 'Duodenum (C-Loop)',
         x: 48,
-        y: 26,
+        y: 48,
         color: '#EA580C',
-        category: 'Light Sensor',
-        functionSummary: 'Light-sensitive crystalline swelling at the base of the long flagellum inside the reservoir.',
-        detailedNotes: 'Contains flavin chromophores that transduce photon signals into flagellar wave modulation for positive phototaxis.'
+        category: 'Neutralization & Initial Absorption',
+        functionSummary: 'First 25cm segment of small intestine receiving acidic chyme, bile, and pancreatic juice at ampulla of Vater.',
+        detailedNotes: 'Brunner glands secrete alkaline mucus neutralizing gastric acid; site of intensive enzymatic hydrolysis.'
+      },
+      {
+        id: 'p-dig-jejunum-ileum',
+        number: 9,
+        name: 'Small Intestine (Jejunum & Ileum)',
+        x: 50,
+        y: 62,
+        color: '#FB923C',
+        category: 'Nutrient Absorption',
+        functionSummary: 'Extensively folded convolutes maximizing absorption of carbohydrates, amino acids, fatty acids, water, and minerals.',
+        detailedNotes: 'Equipped with plicae circulares, villi, and microvilli brush borders; terminal ileum absorbs vitamin B12 and bile salts.'
+      },
+      {
+        id: 'p-dig-cecum-appendix',
+        number: 10,
+        name: 'Cecum & Vermiform Appendix',
+        x: 39,
+        y: 72,
+        color: '#B45309',
+        category: 'Bacterial Reservoir & Junction',
+        functionSummary: 'Blind pouch receiving ileal contents through ileocecal valve; appendix houses beneficial symbiotic gut microflora.',
+        detailedNotes: 'Vermiform appendix is rich in lymphoid tissue (GALT) and acts as an immunological safe house for re-inoculating gut flora.'
+      },
+      {
+        id: 'p-dig-ascending-colon',
+        number: 11,
+        name: 'Ascending Colon',
+        x: 37,
+        y: 57,
+        color: '#9A3412',
+        category: 'Water Reabsorption',
+        functionSummary: 'First section of large intestine ascending along right abdominal wall, reabsorbing water and electrolytes.',
+        detailedNotes: 'Displays characteristic sacculated haustra pouches and longitudinal muscular teniae coli bands.'
+      },
+      {
+        id: 'p-dig-transverse-colon',
+        number: 12,
+        name: 'Transverse Colon',
+        x: 50,
+        y: 52,
+        color: '#9A3412',
+        category: 'Fecal Consolidation',
+        functionSummary: 'Horizontally spanning colon segment between hepatic and splenic flexures hosting dense fermentative microbiome.',
+        detailedNotes: 'Gut microbiota ferment non-digestible fiber into short-chain fatty acids (acetate, butyrate) and synthesize vitamin K.'
+      },
+      {
+        id: 'p-dig-descending-colon',
+        number: 13,
+        name: 'Descending & Sigmoid Colon',
+        x: 63,
+        y: 62,
+        color: '#9A3412',
+        category: 'Fecal Storage & Compaction',
+        functionSummary: 'S-shaped segment storing solid dewatered fecal waste prior to rectal elimination.',
+        detailedNotes: 'Peristaltic mass movements propel compact stool into the rectum triggering the defecation reflex.'
+      },
+      {
+        id: 'p-dig-rectum-anus',
+        number: 14,
+        name: 'Rectum & Anal Canal',
+        x: 50,
+        y: 84,
+        color: '#881337',
+        category: 'Elimination & Defecation',
+        functionSummary: 'Terminal fecal storage reservoir regulated by internal (involuntary) and external (voluntary) anal sphincters.',
+        detailedNotes: 'Stretch receptors in rectal ampulla initiate parasympathetic spinal defecation reflex.'
       }
     ]
   },
@@ -2094,6 +2251,702 @@ export const SCIENTIFIC_PRESETS_REGISTRY: Record<string, ScientificPresetConfig>
         detailedNotes: 'Opens temporarily when an exhausted food vacuole fuses with the pellicular membrane for exocytosis.'
       }
     ]
+  },
+
+  'female-reproductive-system': {
+    diagramType: 'female-reproductive-system',
+    category: 'Human Anatomy',
+    domain: 'biological',
+    defaultRenderMode: '3d',
+    title: 'Female Reproductive Organs (Internal Gynecological Anatomy)',
+    subtitle: 'Coronal cross-section: Uterus, ovaries, fallopian tubes (oviducts), fimbriae, endometrium, myometrium, cervix & vagina',
+    description: 'Textbook anatomical coronal cross-section of the human female internal reproductive tract illustrating the pear-shaped Uterus with thick muscular Myometrium, vascular mucosal Endometrium, triangular Uterine Cavity, bilateral Fallopian tubes (Oviducts) with Isthmus, Ampulla, and Infundibulum, feathered Fimbriae draping over both Ovaries (depicting maturing Graafian follicles and Corpus Luteum), Ovarian and Broad ligaments, the Cervix with internal/external os, and the muscular Vagina with vaginal rugae folds.',
+    funFact: 'Fertilization of the ovum by sperm typically takes place in the ampulla of the Fallopian tube within 12 to 24 hours after ovulation before the blastocyst travels to implant in the endometrium.',
+    pins: [
+      {
+        id: 'p-fr-1',
+        number: 1,
+        name: 'Uterine Fundus',
+        x: 50,
+        y: 35,
+        color: '#BE185D',
+        category: 'Uterine Anatomy',
+        functionSummary: 'Broad superior rounded dome of the uterus lying above the entry of the fallopian tubes.',
+        detailedNotes: 'Measured during pregnancy (fundal height) to assess fetal growth and gestational age.'
+      },
+      {
+        id: 'p-fr-2',
+        number: 2,
+        name: 'Endometrium (Mucosal Lining)',
+        x: 44,
+        y: 48,
+        color: '#881337',
+        category: 'Mucosal Layer',
+        functionSummary: 'Highly vascular, glandular inner mucosal layer that thickens and sheds during the menstrual cycle.',
+        detailedNotes: 'Site of blastocyst implantation and maternal placental formation during pregnancy.'
+      },
+      {
+        id: 'p-fr-3',
+        number: 3,
+        name: 'Uterine Cavity (Internal Lumen)',
+        x: 50,
+        y: 55,
+        color: '#4338CA',
+        category: 'Uterine Lumen',
+        functionSummary: 'Central triangular lumen within the uterine corpus providing space for gestation.',
+        detailedNotes: 'Normal non-pregnant cavity is a potential space flattened anteroposteriorly, enclosed by the endometrium.'
+      },
+      {
+        id: 'p-fr-4',
+        number: 4,
+        name: 'Fallopian Tube (Ampulla / Oviduct)',
+        x: 17,
+        y: 35,
+        color: '#F472B6',
+        category: 'Fertilization Conduit',
+        functionSummary: 'Ciliated muscular duct that sweeps the ovulated egg toward the uterus and serves as the primary site of fertilization.',
+        detailedNotes: 'Ciliated columnar epithelium and peristaltic contractions propel the fertilized zygote toward the uterine cavity.'
+      },
+      {
+        id: 'p-fr-5',
+        number: 5,
+        name: 'Fimbriae of Infundibulum',
+        x: 5,
+        y: 60,
+        color: '#EC4899',
+        category: 'Ovum Capture',
+        functionSummary: 'Fringed finger-like projections pulsating over the ovary to catch the released secondary oocyte during ovulation.',
+        detailedNotes: 'One longer fimbria ovarica attaches directly to the superior pole of the ovary to guide ovum entry into the tubal lumen.'
+      },
+      {
+        id: 'p-fr-6',
+        number: 6,
+        name: 'Myometrium (Smooth Muscle Wall)',
+        x: 60,
+        y: 54,
+        color: '#9D174D',
+        category: 'Muscular Layer',
+        functionSummary: 'Thick middle layer of interlacing smooth muscle fibers responsive to oxytocin during parturition.',
+        detailedNotes: 'Generates powerful rhythmic contractions during labor to expel the fetus and controls postpartum bleeding.'
+      },
+      {
+        id: 'p-fr-7',
+        number: 7,
+        name: 'Ovarian Ligament (Utero-Ovarian)',
+        x: 70,
+        y: 51,
+        color: '#94A3B8',
+        category: 'Structural Support',
+        functionSummary: 'Fibrous cord connecting the medial pole of the ovary to the lateral angle of the uterus below the tubal junction.',
+        detailedNotes: 'Remnant of the upper part of the embryonic gubernaculum running within the broad ligament.'
+      },
+      {
+        id: 'p-fr-8',
+        number: 8,
+        name: 'Ovary (Follicles & Corpus Luteum)',
+        x: 84,
+        y: 58,
+        color: '#F59E0B',
+        category: 'Female Gonad',
+        functionSummary: 'Primary reproductive organ producing female gametes (oocytes) and steroid hormones (estrogen and progesterone).',
+        detailedNotes: 'Contains ovarian follicles at various maturation stages; the post-ovulatory follicle transforms into the progesterone-secreting Corpus Luteum.'
+      },
+      {
+        id: 'p-fr-9',
+        number: 9,
+        name: 'Cervix & Endocervical Canal',
+        x: 52,
+        y: 73,
+        color: '#831843',
+        category: 'Uterine Neck',
+        functionSummary: 'Lower cylindrical neck of the uterus opening into the vagina with internal and external os.',
+        detailedNotes: 'Secretes mucus that changes consistency under hormonal control to either facilitate or block sperm passage.'
+      },
+      {
+        id: 'p-fr-10',
+        number: 10,
+        name: 'Vagina (Vaginal Canal & Rugae)',
+        x: 52,
+        y: 88,
+        color: '#701A75',
+        category: 'Copulatory & Birth Canal',
+        functionSummary: 'Elastic muscular tube lined with non-keratinized stratified squamous epithelium and transverse rugae folds.',
+        detailedNotes: 'Acts as the copulatory canal, pathway for menstrual flow, and the lower birth canal during delivery.'
+      }
+    ]
+  },
+
+  'carbon-cycle': {
+    diagramType: 'carbon-cycle',
+    category: 'Botany & Ecology',
+    domain: 'biological',
+    defaultRenderMode: '3d',
+    title: 'Global Carbon Cycle (Biogeochemical Flows & Sinks)',
+    subtitle: 'Atmospheric reservoir, terrestrial photosynthesis, cellular respiration, soil decomposition, fossil fuels & oceanic carbon sink',
+    description: 'Comprehensive global biogeochemical carbon cycle diagram illustrating the cycling of carbon between the Atmospheric pool (CO₂), Terrestrial autotrophs (photosynthetic carbon fixation by forest canopies), Heterotrophic respiration (animal and plant cellular respiration), Soil microbes and fungi (organic decomposition and humus formation), Subterranean lithosphere (fossil fuel formation and coal/oil reserves), Anthropogenic fossil combustion, and Marine hydrosphere (air-sea gas exchange, marine phytoplankton photosynthesis, and seafloor calcium carbonate sedimentation).',
+    funFact: 'Earth’s oceans are the largest active carbon sink on the planet, absorbing approximately 25% of all human-generated CO₂ emissions each year through the biological and solubility pumps.',
+    pins: [
+      {
+        id: 'p-cc-1',
+        number: 1,
+        name: 'Atmospheric CO₂ Reservoir',
+        x: 50,
+        y: 22,
+        color: '#38BDF8',
+        category: 'Atmospheric Pool',
+        functionSummary: 'Global gaseous reservoir (~850 Gt Carbon) regulating planetary heat retention and the greenhouse effect.',
+        detailedNotes: 'Atmospheric carbon concentrations have risen above 420 ppm primarily due to fossil fuel combustion and land-use change.'
+      },
+      {
+        id: 'p-cc-2',
+        number: 2,
+        name: 'Photosynthesis (Forest Carbon Fixation)',
+        x: 23,
+        y: 38,
+        color: '#10B981',
+        category: 'Terrestrial Primary Production',
+        functionSummary: 'Chlorophyll-bearing autotrophs assimilate atmospheric CO₂ into organic carbohydrates (glucose) using solar photon energy.',
+        detailedNotes: 'Global terrestrial vegetation fixes roughly 120 Gigatons of carbon per year through the Calvin-Benson cycle enzyme RuBisCO.'
+      },
+      {
+        id: 'p-cc-3',
+        number: 3,
+        name: 'Plant & Animal Cellular Respiration',
+        x: 38,
+        y: 52,
+        color: '#F59E0B',
+        category: 'Biological Carbon Release',
+        functionSummary: 'Oxidative catabolism of organic carbon by terrestrial plants and animals yielding metabolic ATP and releasing CO₂ back into air.',
+        detailedNotes: 'Mitochondrial respiration produces CO₂ as a byproduct of pyruvate oxidation and the citric acid cycle.'
+      },
+      {
+        id: 'p-cc-4',
+        number: 4,
+        name: 'Soil Microbial Decomposition',
+        x: 32,
+        y: 68,
+        color: '#D1D5DB',
+        category: 'Soil Organic Carbon',
+        functionSummary: 'Saprophytic soil bacteria and fungi metabolize dead organic leaf litter and detritus, releasing soil respiration CO₂.',
+        detailedNotes: 'Soil stores more than twice the amount of carbon present in the entire atmosphere combined (~1,500–2,000 Gt C).'
+      },
+      {
+        id: 'p-cc-5',
+        number: 5,
+        name: 'Subterranean Fossil Fuel Deposits',
+        x: 30,
+        y: 82,
+        color: '#6B7280',
+        category: 'Geological Carbon Sink',
+        functionSummary: 'Ancient organic biomass buried under intense heat and pressure over hundreds of millions of years forming coal, petroleum, and natural gas.',
+        detailedNotes: 'Represents long-term geological carbon sequestration removed from active biological cycling until extracted by human industry.'
+      },
+      {
+        id: 'p-cc-6',
+        number: 6,
+        name: 'Industrial Combustion & Vehicle Emissions',
+        x: 52,
+        y: 40,
+        color: '#EF4444',
+        category: 'Anthropogenic Flux',
+        functionSummary: 'Rapid thermal oxidation of fossil hydrocarbons in power generation, factories, and transport releasing ~10 Gt C/yr into the atmosphere.',
+        detailedNotes: 'The primary driver of modern global anthropogenic climate change and planetary energy imbalances.'
+      },
+      {
+        id: 'p-cc-7',
+        number: 7,
+        name: 'Oceanic Air-Sea Gas Exchange',
+        x: 75,
+        y: 44,
+        color: '#0284C7',
+        category: 'Marine Solubility Pump',
+        functionSummary: 'Physicochemical dissolution of atmospheric CO₂ into surface seawater forming carbonic acid, bicarbonate, and carbonate ions.',
+        detailedNotes: 'Cold polar surface waters have high CO₂ solubility and sink into deep ocean circulation currents (thermohaline circulation).'
+      },
+      {
+        id: 'p-cc-8',
+        number: 8,
+        name: 'Seafloor Carbonate / Limestone Sedimentation',
+        x: 82,
+        y: 78,
+        color: '#7DD3FC',
+        category: 'Biological Carbon Pump',
+        functionSummary: 'Marine calcifying organisms (coccolithophores, foraminifera, corals) precipitate CaCO₃ shells that settle to form ocean sediments and limestone.',
+        detailedNotes: 'Deep sedimentary carbonate rocks hold the vast majority of Earth’s total carbon inventory (>60,000,000 Gt C).'
+      }
+    ]
+  },
+
+  'nitrogen-cycle': {
+    diagramType: 'nitrogen-cycle',
+    category: 'Botany & Ecology',
+    domain: 'biological',
+    defaultRenderMode: '3d',
+    title: 'Biogeochemical Nitrogen Cycle',
+    subtitle: 'Atmospheric pool, biological nitrogen fixation, ammonification, nitrification & denitrification',
+    description: 'Comprehensive scientific overview of the global Nitrogen Cycle showing atmospheric N₂ pool (78%), symbiotic biological nitrogen fixation by Rhizobium bacteria in legume root nodules, free-living Azotobacter, ammonification by saprophytes breaking down organic matter into NH₄⁺, two-step bacterial nitrification (Nitrosomonas oxidizing NH₄⁺ to NO₂⁻, and Nitrobacter oxidizing NO₂⁻ to NO₃⁻), plant root assimilation into amino acids and nucleic acids, and anaerobic denitrification by Pseudomonas returning N₂ gas to the atmosphere.',
+    funFact: 'Although atmospheric nitrogen makes up 78% of the air we breathe, plants and animals cannot use atmospheric N₂ directly because the triple covalent bond (N≡N) requires specialized nitrogenase enzymes or intense electrical energy (lightning) to break.',
+    pins: [
+      {
+        id: 'p-nc-1',
+        number: 1,
+        name: 'Atmospheric Nitrogen (N₂) Pool',
+        x: 50,
+        y: 22,
+        color: '#818CF8',
+        category: 'Atmospheric Reservoir',
+        functionSummary: '78% of Earth’s atmosphere consisting of inert diatomic N₂ bound by an extremely strong triple covalent bond.',
+        detailedNotes: 'Biological organisms require nitrogen for synthesis of amino acids, proteins, ATP, RNA, and DNA.'
+      },
+      {
+        id: 'p-nc-2',
+        number: 2,
+        name: 'Symbiotic Nitrogen Fixation (Rhizobium)',
+        x: 24,
+        y: 48,
+        color: '#F59E0B',
+        category: 'Biological Fixation',
+        functionSummary: 'Symbiotic Rhizobium bacteria living inside legume root nodules using nitrogenase enzymes to convert atmospheric N₂ into ammonia (NH₃).',
+        detailedNotes: 'Leghemoglobin inside the nodule binds oxygen to protect oxygen-sensitive nitrogenase enzymes while providing oxygen for bacterial respiration.'
+      },
+      {
+        id: 'p-nc-3',
+        number: 3,
+        name: 'Ammonification (NH₄⁺ Production)',
+        x: 42,
+        y: 56,
+        color: '#FBBF24',
+        category: 'Decomposition',
+        functionSummary: 'Saprophytic soil decomposers (bacteria and fungi) catabolize nitrogenous organic animal waste and detritus into Ammonium (NH₄⁺).',
+        detailedNotes: 'Converts organic amines and urea back into inorganic ammonium ions in moist soil.'
+      },
+      {
+        id: 'p-nc-4',
+        number: 4,
+        name: 'Nitrification Stage 1: Nitrosomonas (NO₂⁻)',
+        x: 58,
+        y: 56,
+        color: '#A5B4FC',
+        category: 'Nitrification',
+        functionSummary: 'Chemoautotrophic Nitrosomonas bacteria oxidize ammonium (NH₄⁺) into Nitrite ions (NO₂⁻).',
+        detailedNotes: 'Aerobic oxidation reaction: 2NH₄⁺ + 3O₂ → 2NO₂⁻ + 4H⁺ + 2H₂O + chemical energy.'
+      },
+      {
+        id: 'p-nc-5',
+        number: 5,
+        name: 'Nitrification Stage 2: Nitrobacter (NO₃⁻)',
+        x: 58,
+        y: 76,
+        color: '#34D399',
+        category: 'Nitrification',
+        functionSummary: 'Nitrobacter bacteria oxidize toxic Nitrites (NO₂⁻) into highly soluble Nitrates (NO₃⁻).',
+        detailedNotes: 'Aerobic oxidation reaction: 2NO₂⁻ + O₂ → 2NO₃⁻ + energy; creates the primary chemical form absorbed by plants.'
+      },
+      {
+        id: 'p-nc-6',
+        number: 6,
+        name: 'Plant Root Nitrate Assimilation',
+        x: 30,
+        y: 42,
+        color: '#10B981',
+        category: 'Biosynthesis',
+        functionSummary: 'Plant roots absorb dissolved NO₃⁻ and NH₄⁺ to synthesize essential amino acids, proteins, and nucleotides.',
+        detailedNotes: 'Herbivores and consumers ingest these plant proteins to obtain essential organic nitrogen.'
+      },
+      {
+        id: 'p-nc-7',
+        number: 7,
+        name: 'Denitrification (Pseudomonas)',
+        x: 76,
+        y: 48,
+        color: '#F43F5E',
+        category: 'Atmospheric Return',
+        functionSummary: 'Anaerobic denitrifying bacteria (e.g. Pseudomonas) reduce soil nitrates (NO₃⁻) back into N₂ and N₂O gas.',
+        detailedNotes: 'Occurs primarily in waterlogged, oxygen-depleted soils and marshlands, completing the global cycle.'
+      }
+    ]
+  },
+
+  'male-reproductive-system': {
+    diagramType: 'male-reproductive-system',
+    category: 'Human Anatomy',
+    domain: 'biological',
+    defaultRenderMode: '3d',
+    title: 'Male Reproductive Organs & System',
+    subtitle: 'Anatomical cross-section: Testes, epididymis, vas deferens, seminal vesicles, prostate gland, bulbourethral gland & penis',
+    description: 'Textbook anatomical cross-section of the human male internal and external reproductive system illustrating the Testes with coiled seminiferous tubules (spermatogenesis site), Epididymis for sperm maturation and motility acquisition, Vas Deferens (ductus deferens) looping over the urinary bladder, accessory reproductive glands (Seminal Vesicles, Prostate Gland, and Bulbourethral Cowper’s glands) contributing seminal fluid, and the erectile columns of the Penis (Corpora Cavernosa and Corpus Spongiosum) terminating at the Glans Penis and Urethral Meatus.',
+    funFact: 'The human testes are housed outside the abdominal cavity in the scrotum because sperm production requires a temperature approximately 2 to 3°C lower than normal core body temperature.',
+    pins: [
+      {
+        id: 'p-mr-1',
+        number: 1,
+        name: 'Urinary Bladder',
+        x: 50,
+        y: 32,
+        color: '#F59E0B',
+        category: 'Urinary Reservoir',
+        functionSummary: 'Muscular pelvic organ storing urine delivered from the kidneys via the ureters before voiding.',
+        detailedNotes: 'Sits superior and anterior to the prostate gland and seminal vesicles.'
+      },
+      {
+        id: 'p-mr-2',
+        number: 2,
+        name: 'Prostate Gland & Prostatic Urethra',
+        x: 50,
+        y: 46,
+        color: '#8B5CF6',
+        category: 'Accessory Sex Gland',
+        functionSummary: 'Walnut-sized gland encircling the urethra secreting a slightly alkaline, enzyme-rich fluid (including PSA) that activates sperm.',
+        detailedNotes: 'Contributes ~30% of total seminal volume; smooth muscle within the capsule contracts during ejaculation to expel semen.'
+      },
+      {
+        id: 'p-mr-3',
+        number: 3,
+        name: 'Seminal Vesicle',
+        x: 60,
+        y: 40,
+        color: '#EC4899',
+        category: 'Accessory Sex Gland',
+        functionSummary: 'Paired sacculated glands located posteroinferior to the bladder producing ~60% of semen volume.',
+        detailedNotes: 'Secretes viscous alkaline fluid rich in fructose (fuel for sperm flagellar motility), prostaglandins, and clotting proteins.'
+      },
+      {
+        id: 'p-mr-4',
+        number: 4,
+        name: 'Vas Deferens (Ductus Deferens)',
+        x: 34,
+        y: 38,
+        color: '#3B82F6',
+        category: 'Sperm Conduit',
+        functionSummary: 'Thick muscular duct that propels spermatozoa from the tail of the epididymis up into the ejaculatory duct via peristalsis.',
+        detailedNotes: 'Travels through the spermatic cord and inguinal canal, looping over the ureter and posterior bladder.'
+      },
+      {
+        id: 'p-mr-5',
+        number: 5,
+        name: 'Testis & Seminiferous Tubules',
+        x: 32,
+        y: 78,
+        color: '#0284C7',
+        category: 'Male Gonad',
+        functionSummary: 'Primary male reproductive organ producing millions of spermatozoa daily and secreting testosterone by Leydig interstitial cells.',
+        detailedNotes: 'Divided into ~250 lobules containing tightly coiled seminiferous tubules lined with spermatogenic and Sertoli nurse cells.'
+      },
+      {
+        id: 'p-mr-6',
+        number: 6,
+        name: 'Epididymis (Head, Body, Tail)',
+        x: 38,
+        y: 72,
+        color: '#10B981',
+        category: 'Sperm Maturation',
+        functionSummary: 'Crescent-shaped 6-meter coiled duct capping the testis where newly formed sperm undergo 12–14 days of maturation and gain motility.',
+        detailedNotes: 'Stores mature spermatozoa in its cauda (tail) until ejaculation; non-ejaculated sperm are reabsorbed.'
+      },
+      {
+        id: 'p-mr-7',
+        number: 7,
+        name: 'Bulbourethral (Cowper’s) Gland',
+        x: 55,
+        y: 52,
+        color: '#06B6D4',
+        category: 'Accessory Sex Gland',
+        functionSummary: 'Pea-sized paired glands producing clear, alkaline pre-ejaculatory mucus.',
+        detailedNotes: 'Neutralizes acidic residual urine in the urethra and provides lubrication prior to ejaculation.'
+      },
+      {
+        id: 'p-mr-8',
+        number: 8,
+        name: 'Erectile Columns (Corpora Cavernosa & Spongiosum)',
+        x: 50,
+        y: 64,
+        color: '#BE185D',
+        category: 'Erectile Tissue',
+        functionSummary: 'Vascular cylinders that engorge with arterial blood during sexual arousal to produce penile erection.',
+        detailedNotes: 'The corpus spongiosum surrounds the spongy urethra, keeping it open during ejaculation.'
+      },
+      {
+        id: 'p-mr-9',
+        number: 9,
+        name: 'Glans Penis & Urethral Meatus',
+        x: 50,
+        y: 80,
+        color: '#F43F5E',
+        category: 'External Genitalia',
+        functionSummary: 'Sensitive distal expansion of the corpus spongiosum containing dense sensory nerve endings and the external urethral orifice.',
+        detailedNotes: 'Covered by the prepuce (foreskin) in uncircumcised individuals; common conduit for both urine and semen.'
+      }
+    ]
+  },
+
+  'water-cycle': {
+    diagramType: 'water-cycle',
+    category: 'Earth & Space',
+    domain: 'physical',
+    defaultRenderMode: '3d',
+    title: 'Global Hydrological (Water) Cycle',
+    subtitle: 'Solar evaporation, plant transpiration, atmospheric condensation, precipitation, runoff & infiltration',
+    description: 'Textbook diagram of Earth’s hydrological cycle depicting solar energy-driven evaporation from oceans and lakes, biological evapotranspiration from vegetative canopies, cloud condensation in the upper atmosphere, precipitation (rain and mountain snowfall), surface stream runoff returning to oceans, and subterranean infiltration into the groundwater aquifer table.',
+    funFact: 'Water molecules have been cycling through Earth’s atmosphere, oceans, and living organisms for over 4 billion years—a single drop of rain you encounter may have once passed through a dinosaur!',
+    pins: [
+      {
+        id: 'p-wc-1',
+        number: 1,
+        name: 'Solar Energy Driver (Sun)',
+        x: 22,
+        y: 24,
+        color: '#F59E0B',
+        category: 'Energy Source',
+        functionSummary: 'Radiant thermal energy warming surface waters to power the continuous global movement of water.',
+        detailedNotes: 'Solar radiation breaks hydrogen bonds between liquid water molecules to drive phase changes to water vapor.'
+      },
+      {
+        id: 'p-wc-2',
+        number: 2,
+        name: 'Atmospheric Condensation (Clouds)',
+        x: 50,
+        y: 26,
+        color: '#94A3B8',
+        category: 'Phase Change',
+        functionSummary: 'Rising warm water vapor cools in the upper troposphere, condensing onto microscopic aerosols to form water droplets and clouds.',
+        detailedNotes: 'Releases latent heat of condensation into the atmosphere, powering storms and weather systems.'
+      },
+      {
+        id: 'p-wc-3',
+        number: 3,
+        name: 'Precipitation (Rain & Snow)',
+        x: 54,
+        y: 46,
+        color: '#38BDF8',
+        category: 'Atmospheric Deposition',
+        functionSummary: 'Water droplets coalesce into larger raindrops or ice crystals falling to Earth under gravity.',
+        detailedNotes: 'Replenishes terrestrial freshwater ecosystems, alpine glaciers, and subterranean water tables.'
+      },
+      {
+        id: 'p-wc-4',
+        number: 4,
+        name: 'Evaporation (Ocean & Surface Waters)',
+        x: 76,
+        y: 56,
+        color: '#60A5FA',
+        category: 'Vaporization',
+        functionSummary: 'Phase transition of liquid water from oceanic surfaces and lakes into atmospheric water vapor gas.',
+        detailedNotes: 'Over 86% of global evaporation originates directly from the world’s oceans.'
+      },
+      {
+        id: 'p-wc-5',
+        number: 5,
+        name: 'Plant Evapotranspiration',
+        x: 32,
+        y: 62,
+        color: '#10B981',
+        category: 'Biological Flux',
+        functionSummary: 'Uptake of groundwater by plant roots and subsequent release of water vapor through leaf stomata.',
+        detailedNotes: 'Contributes significantly to regional atmospheric humidity and local microclimate regulation.'
+      },
+      {
+        id: 'p-wc-6',
+        number: 6,
+        name: 'Surface Runoff & Mountain Streams',
+        x: 58,
+        y: 76,
+        color: '#38BDF8',
+        category: 'Hydrological Flow',
+        functionSummary: 'Precipitation flowing over soil surfaces, forming streams and river networks that return water to oceans.',
+        detailedNotes: 'Carries dissolved minerals and nutrients downstream into aquatic ecosystems.'
+      },
+      {
+        id: 'p-wc-7',
+        number: 7,
+        name: 'Ocean & Groundwater Reservoir',
+        x: 78,
+        y: 78,
+        color: '#0284C7',
+        category: 'Planetary Sink',
+        functionSummary: 'The ultimate planetary water reservoir containing over 97% of Earth’s free water mass.',
+        detailedNotes: 'Seawater has an average salinity of ~35 practical salinity units (PSU).'
+      }
+    ]
+  },
+
+  'electric-circuit': {
+    diagramType: 'electric-circuit',
+    category: 'Physics & Chemistry',
+    domain: 'physical',
+    defaultRenderMode: '3d',
+    title: 'DC Electric Circuit & Ohm’s Law Schematic',
+    subtitle: 'Series/Parallel circuit: DC battery, switch, resistor, ammeter, voltmeter & incandescent load',
+    description: 'Comprehensive physics schematic of a direct-current (DC) circuit demonstrating closed loop current flow (I = V/R), a DC voltage chemical battery, single-pole knife switch, linear fixed resistor with color code bands, series DC ammeter, parallel high-impedance voltmeter, incandescent light bulb load, and conventional current direction vectors.',
+    funFact: 'Conventional current flows from positive to negative due to Benjamin Franklin’s 1752 convention, although physical conduction electrons actually drift in the opposite direction (negative to positive)!',
+    pins: [
+      {
+        id: 'p-circ-1',
+        number: 1,
+        name: 'DC Battery / EMF Source (12V)',
+        x: 18,
+        y: 50,
+        color: '#EF4444',
+        category: 'Power Supply',
+        functionSummary: 'Chemical cell providing electromotive force (EMF) and potential difference across the circuit.',
+        detailedNotes: 'The long thin line denotes the positive terminal (+), while the short thick plate denotes the negative terminal (-).'
+      },
+      {
+        id: 'p-circ-2',
+        number: 2,
+        name: 'Single-Pole Knife Switch',
+        x: 35,
+        y: 28,
+        color: '#10B981',
+        category: 'Control Element',
+        functionSummary: 'Mechanical switch that completes (closes) or interrupts (opens) conductive path.',
+        detailedNotes: 'In the closed state, contact resistance is virtually zero, allowing continuous charge flow.'
+      },
+      {
+        id: 'p-circ-3',
+        number: 3,
+        name: 'Series DC Ammeter (A)',
+        x: 63,
+        y: 28,
+        color: '#38BDF8',
+        category: 'Measurement',
+        functionSummary: 'Very low-resistance instrument connected in series to measure electric current (amperes).',
+        detailedNotes: 'Must have near-zero internal resistance so it does not significantly reduce circuit current.'
+      },
+      {
+        id: 'p-circ-4',
+        number: 4,
+        name: 'Fixed Resistor (R = 100 Ω)',
+        x: 82,
+        y: 50,
+        color: '#F59E0B',
+        category: 'Impedance Load',
+        functionSummary: 'Linear resistive element that limits current according to Ohm’s Law (V = IR).',
+        detailedNotes: 'Dissipates electrical energy as thermal Joule heating (P = I²R).'
+      },
+      {
+        id: 'p-circ-5',
+        number: 5,
+        name: 'Parallel Voltmeter (V)',
+        x: 93,
+        y: 50,
+        color: '#A855F7',
+        category: 'Measurement',
+        functionSummary: 'High-impedance instrument connected in parallel to measure potential difference (volts).',
+        detailedNotes: 'Possesses megaohm-scale internal resistance to prevent shunting significant current away from the resistor.'
+      },
+      {
+        id: 'p-circ-6',
+        number: 6,
+        name: 'Incandescent Lamp / Load',
+        x: 50,
+        y: 72,
+        color: '#FBBF24',
+        category: 'Output Transducer',
+        functionSummary: 'Tungsten filament bulb that converts electrical power into luminous radiant energy and heat.',
+        detailedNotes: 'Filament glows incandescently when heated to ~2500°C by resistive current flow.'
+      },
+      {
+        id: 'p-circ-7',
+        number: 7,
+        name: 'Conventional Current Vector (I)',
+        x: 28,
+        y: 22,
+        color: '#F43F5E',
+        category: 'Current Flow',
+        functionSummary: 'Standard positive charge flow direction from (+) terminal around to (-) terminal.',
+        detailedNotes: 'Governed by Kirchhoff’s Current Law (KCL): the algebraic sum of currents entering any junction equals zero.'
+      }
+    ]
+  },
+
+  'electromagnetic-spectrum': {
+    diagramType: 'electromagnetic-spectrum',
+    category: 'Physics & Chemistry',
+    domain: 'physical',
+    defaultRenderMode: '3d',
+    title: 'The Electromagnetic Spectrum (EM Wave Continuum)',
+    subtitle: 'Radio, microwaves, infrared, visible ROYGBIV (400-700nm), UV, X-rays & gamma rays',
+    description: 'Complete quantitative electromagnetic spectrum diagram illustrating transverse EM waves across the entire frequency (10⁴ to 10²⁰ Hz), wavelength (10³ m to 10⁻¹² m), and photon energy (10⁻¹⁰ to 10⁶ eV) continuum, including an expanded visible light ROYGBIV rainbow prism and increasing energy vector.',
+    funFact: 'Visible light represents less than one ten-trillionth of the known electromagnetic spectrum, yet human photoreceptor cones are tuned precisely to the 380–700 nm solar peak window!',
+    pins: [
+      {
+        id: 'p-em-1',
+        number: 1,
+        name: 'Radio Waves (λ ≈ 10³ m, f ≈ 10⁴ Hz)',
+        x: 15,
+        y: 25,
+        color: '#3B82F6',
+        category: 'Long Wave Band',
+        functionSummary: 'Lowest frequency EM radiation used for AM/FM radio, television, and global communications.',
+        detailedNotes: 'Wavelengths range from kilometers to meters, easily diffracting around terrestrial terrain obstacles.'
+      },
+      {
+        id: 'p-em-2',
+        number: 2,
+        name: 'Microwaves (λ ≈ 10⁻² m, f ≈ 10⁸ Hz)',
+        x: 27,
+        y: 25,
+        color: '#06B6D4',
+        category: 'High Frequency Band',
+        functionSummary: 'Sub-meter wavelengths used in WiFi, satellite uplink, radar, and dielectric food heating.',
+        detailedNotes: 'Microwave ovens tune to 2.45 GHz, resonant with dipolar rotational transitions in water molecules.'
+      },
+      {
+        id: 'p-em-3',
+        number: 3,
+        name: 'Infrared Radiation (λ ≈ 10⁻⁵ m)',
+        x: 39,
+        y: 25,
+        color: '#10B981',
+        category: 'Thermal Radiation',
+        functionSummary: 'Thermal emissions released by warm objects, utilized in night vision and thermography.',
+        detailedNotes: 'Transfers thermal radiant energy directly across vacuum; sensed as heat by thermoreceptors in skin.'
+      },
+      {
+        id: 'p-em-4',
+        number: 4,
+        name: 'Visible Light & Prism (400–700 nm)',
+        x: 50,
+        y: 50,
+        color: '#F59E0B',
+        category: 'Optical Spectrum',
+        functionSummary: 'Narrow band detected by human retinal rhodopsin/photopsin (Red, Orange, Yellow, Green, Blue, Violet).',
+        detailedNotes: 'Red has the longest wavelength (~700 nm, lowest energy), while violet has the shortest wavelength (~400 nm, highest optical energy).'
+      },
+      {
+        id: 'p-em-5',
+        number: 5,
+        name: 'Ultraviolet Radiation (UV-A, B, C)',
+        x: 62,
+        y: 25,
+        color: '#8B5CF6',
+        category: 'Ionizing-Threshold',
+        functionSummary: 'Higher energy solar radiation driving vitamin D synthesis, fluorescence, and germicidal sterilization.',
+        detailedNotes: 'UV-B causes thymine dimer mutations in DNA, while atmospheric ozone absorbs lethal UV-C.'
+      },
+      {
+        id: 'p-em-6',
+        number: 6,
+        name: 'X-Rays (λ ≈ 10⁻¹⁰ m, 10⁴ eV)',
+        x: 74,
+        y: 25,
+        color: '#EC4899',
+        category: 'Ionizing Radiation',
+        functionSummary: 'High-energy ionizing photons that penetrate soft tissue for medical radiography and crystallography.',
+        detailedNotes: 'Produced via Bremsstrahlung (braking radiation) and inner-shell atomic electron transitions in heavy metal targets.'
+      },
+      {
+        id: 'p-em-7',
+        number: 7,
+        name: 'Gamma Rays (λ ≤ 10⁻¹² m, >10⁶ eV)',
+        x: 86,
+        y: 25,
+        color: '#EF4444',
+        category: 'Nuclear Radiation',
+        functionSummary: 'Extremely penetrating high-energy radiation emitted during nuclear decay, supernovas, and gamma-ray bursts.',
+        detailedNotes: 'Have the shortest wavelength and greatest photon energy (E = hf), requiring thick lead or meters of concrete for shielding.'
+      }
+    ]
   }
 };
 
@@ -2104,22 +2957,57 @@ export const SCIENTIFIC_PRESETS_REGISTRY: Record<string, ScientificPresetConfig>
 export function matchScientificConcept(query: string): ScientificPresetConfig | null {
   const q = query.toLowerCase();
 
-  // 1. Human Sperm / Spermatozoon / Male Gamete (HIGH PRIORITY)
+  // 1. Female Reproductive System & Organs (HIGH PRIORITY)
+  if (/\b(female\s*reproductive|female\s*organ|female\s*anatomy|uterus|womb|fallopian|oviduct|fimbriae|endometrium|myometrium|cervix|vagina|ovary|ovaries|graafian\s*follicle|female\s*internal\s*genitalia)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['female-reproductive-system'];
+  }
+
+  // 2. Carbon Cycle (HIGH PRIORITY)
+  if (/\b(carbon\s*cycle|global\s*carbon|biogeochemical\s*carbon|carbon\s*flux|carbon\s*sink|carbon\s*sequestration)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['carbon-cycle'];
+  }
+
+  // 3. Nitrogen Cycle (HIGH PRIORITY)
+  if (/\b(nitrogen\s*cycle|nitrogen\s*fixation|nitrification|ammonification|denitrification|rhizobium\s*nodule)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['nitrogen-cycle'];
+  }
+
+  // 4. Male Reproductive System & Organs (HIGH PRIORITY)
+  if (/\b(male\s*reproductive|male\s*organ|male\s*anatomy|testis|testes|prostate|vas\s*deferens|scrotum|penis\s*anatomy|seminal\s*vesicle|epididymis)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['male-reproductive-system'];
+  }
+
+  // 5. Hydrological / Water Cycle (HIGH PRIORITY)
+  if (/\b(water\s*cycle|hydrologic\s*cycle|hydrological\s*cycle|evapotranspiration|precipitation\s*cycle)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['water-cycle'];
+  }
+
+  // 6. Electric Circuit & Ohm's Law (HIGH PRIORITY)
+  if (/\b(electric\s*circuit|circuit\s*diagram|series\s*circuit|parallel\s*circuit|schematic\s*circuit|resistor\s*circuit|ammeter\s*voltmeter|ohms?\s*law|electrical\s*schematic|closed\s*circuit)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['electric-circuit'];
+  }
+
+  // 7. Electromagnetic Spectrum & Wave Continuum (HIGH PRIORITY)
+  if (/\b(electromagnetic\s*spectrum|em\s*spectrum|light\s*spectrum|visible\s*spectrum|radio\s*waves?|microwaves?|infrared|ultraviolet|x[- ]rays?|gamma\s*rays?|wavelength\s*frequency|photon\s*energy\s*spectrum)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['electromagnetic-spectrum'];
+  }
+
+  // 8. Human Sperm / Spermatozoon / Male Gamete (HIGH PRIORITY)
   if (/\b(sperm|spermatozoon|spermatozoa|sperm\s*cell|male\s*gamete|sperm\s*head|acrosome|sperm\s*flagellum|sperm\s*anatomy|sperm\s*structure|spermiogenesis|spermato|spermatocele)\b/i.test(q)) {
     return SCIENTIFIC_PRESETS_REGISTRY['human-sperm'];
   }
 
-  // 2. Euglena (HIGH PRIORITY)
+  // 7. Euglena (HIGH PRIORITY)
   if (/\b(euglena|euglenoid|euglenophyta|euglena\s*gracilis|euglena\s*viridis|mastigophora|flagellate\s*protist)\b/i.test(q)) {
     return SCIENTIFIC_PRESETS_REGISTRY['euglena'];
   }
 
-  // 2. Amoeba & Sarcodines (HIGH PRIORITY)
+  // 8. Amoeba & Sarcodines (HIGH PRIORITY)
   if (/\b(amoeba|ameba|amoeba\s*proteus|pseudopod|lobopod|sarcodina|rhizopod)\b/i.test(q)) {
     return SCIENTIFIC_PRESETS_REGISTRY['amoeba'];
   }
 
-  // 3. Paramecium & Ciliates (HIGH PRIORITY)
+  // 9. Paramecium & Ciliates (HIGH PRIORITY)
   if (/\b(parameci|paramecium|paramecium\s*caudatum|ciliate|ciliophora)\b/i.test(q)) {
     return SCIENTIFIC_PRESETS_REGISTRY['paramecium'];
   }
@@ -2194,8 +3082,13 @@ export function matchScientificConcept(query: string): ScientificPresetConfig | 
     return SCIENTIFIC_PRESETS_REGISTRY['lungs-respiratory'];
   }
 
-  // 18. Stomach / Digestive System
-  if (/\b(stomach|gastric|digest|rugae|pylorus|pyloric|fundus|duodenum|esophagus)\b/i.test(q)) {
+  // 18. Full Digestive System / Gastrointestinal Tract
+  if (/\b(digestive\s*system|alimentary\s*canal|digestive\s*tract|gastrointestinal|gut\s*anatomy|bowel|colon|intestines|liver\s*and\s*stomach)\b/i.test(q)) {
+    return SCIENTIFIC_PRESETS_REGISTRY['digestive-system'];
+  }
+
+  // 18b. Stomach / Gastric Organ
+  if (/\b(stomach|gastric|rugae|pylorus|pyloric|fundus)\b/i.test(q)) {
     return SCIENTIFIC_PRESETS_REGISTRY['stomach-digestive'];
   }
 

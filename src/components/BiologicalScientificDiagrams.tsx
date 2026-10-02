@@ -4,6 +4,7 @@ export interface DiagramProps {
   isPaperMode: boolean;
   activePinId?: string | null;
   renderMode?: '3d' | '2d' | 'paper';
+  hideFlagellum?: boolean;
 }
 
 /**
@@ -1131,6 +1132,332 @@ export const HumanLungsRespiratoryDiagram: React.FC<DiagramProps> = ({ isPaperMo
 };
 
 /**
+ * High-Resolution Full Human Digestive System Diagram (Gastrointestinal Tract & Accessory Organs)
+ * Modeled on authoritative medical anatomy atlases (Netter / Gray's Anatomy):
+ * - Head & neck with Oral cavity, Tongue, Teeth, Pharynx, and Salivary Glands (Parotid, Submandibular).
+ * - Esophagus tube descending past diaphragm into abdominal cavity.
+ * - J-shaped Stomach with Cardia, Fundus, Body, Gastric Rugae folds, and Pylorus.
+ * - Multi-lobed Liver (Right & Left lobes, Falciform ligament) with pear-shaped Gallbladder and Bile Ducts.
+ * - C-shaped Duodenum with nestled Pancreas (Head, Body, Tail, and Main Pancreatic Duct).
+ * - Highly folded loops of Small Intestine (Jejunum & Ileum) with plicae circulares.
+ * - Large Intestine / Colon (Cecum, Vermiform Appendix, Ascending, Transverse, Descending, Sigmoid Colon, Rectum, and Anal Canal).
+ */
+export const HumanDigestiveSystemDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
+  return (
+    <g id="human-digestive-system-group" transform="translate(0, -10)">
+      {/* 0. Subtle Anatomical Torso & Head Silhouette Backdrop */}
+      <path
+        d="M -50 -255 C -30 -265 30 -265 50 -255 C 65 -245 75 -230 75 -210 C 75 -190 60 -175 45 -165 L 45 -150 C 70 -140 120 -115 135 -70 C 145 -30 145 70 140 160 C 135 220 120 250 100 270 L -100 270 C -120 250 -135 220 -140 160 C -145 70 -145 -30 -135 -70 C -120 -115 -70 -140 -45 -150 L -45 -165 C -60 -175 -75 -190 -75 -210 C -75 -230 -65 -245 -50 -255 Z"
+        fill={isPaperMode ? '#F8FAFC' : '#0F172A'}
+        fillOpacity={isPaperMode ? 0.3 : 0.45}
+        stroke={isPaperMode ? '#CBD5E1' : '#334155'}
+        strokeWidth={1.5}
+        strokeDasharray="5 4"
+      />
+
+      {/* Diaphragm Muscle Line */}
+      <path
+        d="M -115 -65 Q 0 -90 115 -65"
+        stroke={isPaperMode ? '#64748B' : '#64748B'}
+        strokeWidth={2}
+        strokeDasharray="4 3"
+        fill="none"
+      />
+
+      {/* 1. Head & Oral Cavity Structures */}
+      {/* Oral Cavity Chamber */}
+      <path
+        d="M -25 -225 C -15 -240 20 -240 32 -225 C 38 -215 32 -200 15 -195 C -10 -190 -22 -210 -25 -225 Z"
+        fill={isPaperMode ? '#E2E8F0' : '#FDA4AF'}
+        stroke={isPaperMode ? '#000000' : '#E11D48'}
+        strokeWidth={2}
+      />
+      {/* Tongue */}
+      <path
+        d="M -15 -205 Q 5 -202 20 -210 Q 5 -196 -15 -205 Z"
+        fill={isPaperMode ? '#94A3B8' : '#FB7185'}
+        stroke={isPaperMode ? '#000000' : '#BE185D'}
+        strokeWidth={1.5}
+      />
+      {/* Teeth Row */}
+      <rect x="-10" y="-228" width="22" height="4" rx="1.5" fill={isPaperMode ? '#FFFFFF' : '#FFFFFF'} stroke={isPaperMode ? '#000000' : '#CBD5E1'} strokeWidth={1} />
+      <rect x="-10" y="-216" width="22" height="4" rx="1.5" fill={isPaperMode ? '#FFFFFF' : '#FFFFFF'} stroke={isPaperMode ? '#000000' : '#CBD5E1'} strokeWidth={1} />
+
+      {/* Parotid Salivary Gland (Right pre-auricular) */}
+      <ellipse
+        cx="44"
+        cy="-218"
+        rx="10"
+        ry="13"
+        fill={isPaperMode ? '#E2E8F0' : '#FBBF24'}
+        stroke={isPaperMode ? '#000000' : '#D97706'}
+        strokeWidth={1.75}
+      />
+      {/* Parotid Stensen's Duct */}
+      <path d="M 36 -218 L 16 -218" stroke={isPaperMode ? '#000000' : '#D97706'} strokeWidth={1.5} strokeDasharray="2 2" fill="none" />
+
+      {/* Submandibular & Sublingual Glands */}
+      <ellipse
+        cx="20"
+        cy="-194"
+        rx="8"
+        ry="6"
+        fill={isPaperMode ? '#E2E8F0' : '#F59E0B'}
+        stroke={isPaperMode ? '#000000' : '#B45309'}
+        strokeWidth={1.5}
+      />
+
+      {/* Pharynx (Muscular funnel) */}
+      <path
+        d="M -8 -195 L 12 -195 L 10 -165 L -6 -165 Z"
+        fill={isPaperMode ? '#CBD5E1' : '#F43F5E'}
+        stroke={isPaperMode ? '#000000' : '#BE185D'}
+        strokeWidth={2}
+      />
+
+      {/* 2. Esophagus (Muscular peristaltic food tube) */}
+      <path
+        d="M -6 -165 L 10 -165 L 8 -65 L -8 -65 Z"
+        fill={isPaperMode ? '#E2E8F0' : '#FB7185'}
+        stroke={isPaperMode ? '#000000' : '#E11D48'}
+        strokeWidth={2}
+      />
+      {/* Esophageal Peristaltic Bands */}
+      {[-150, -130, -110, -90, -75].map((yB, bIdx) => (
+        <line key={`eso-band-${bIdx}`} x1="-6" y1={yB} x2="9" y2={yB} stroke={isPaperMode ? '#000000' : '#FDA4AF'} strokeWidth={1.2} />
+      ))}
+
+      {/* Lower Esophageal (Cardiac) Sphincter */}
+      <ellipse cx="0" cy="-64" rx="9" ry="3.5" fill="none" stroke={isPaperMode ? '#000000' : '#FDE047'} strokeWidth={2} strokeDasharray="3 2" />
+
+      {/* 3. Multi-Lobed Liver (Right & Left Lobes) - Left quadrant of anatomical figure */}
+      <g id="liver-organ">
+        {/* Right & Left Liver Mass */}
+        <path
+          d="M -92 -60 C -40 -72 5 -60 12 -45 C 16 -30 10 -5 -10 12 C -28 24 -70 20 -95 0 C -112 -15 -110 -45 -92 -60 Z"
+          fill={isPaperMode ? '#475569' : '#991B1B'}
+          fillOpacity={isPaperMode ? 1 : 0.92}
+          stroke={isPaperMode ? '#000000' : '#7F1D1D'}
+          strokeWidth={isPaperMode ? 2.5 : 3}
+        />
+        {/* Falciform Ligament dividing lobes */}
+        <path
+          d="M -45 -67 C -42 -40 -40 -15 -36 15"
+          stroke={isPaperMode ? '#FFFFFF' : '#FECACA'}
+          strokeWidth={1.75}
+          fill="none"
+        />
+
+        {/* Gallbladder (Pear-shaped green reservoir beneath liver) */}
+        <path
+          d="M -36 -2 C -42 10 -40 22 -30 25 C -22 27 -20 16 -24 3 Z"
+          fill={isPaperMode ? '#15803D' : '#22C55E'}
+          stroke={isPaperMode ? '#000000' : '#14532D'}
+          strokeWidth={2}
+        />
+        {/* Cystic & Common Bile Duct leading into duodenum */}
+        <path
+          d="M -26 12 C -18 16 -12 25 -10 38"
+          stroke={isPaperMode ? '#000000' : '#16A34A'}
+          strokeWidth={2.5}
+          fill="none"
+        />
+      </g>
+
+      {/* 4. Stomach (J-shaped digestive organ with Rugae folds) */}
+      <g id="stomach-organ">
+        <path
+          d="M 2 -64 C 18 -68 62 -65 78 -40 C 92 -15 95 25 78 52 C 60 78 20 80 -4 65 C -22 52 -24 36 -12 24 C -2 14 12 12 18 -10 C 22 -30 12 -55 2 -64 Z"
+          fill={isPaperMode ? '#E2E8F0' : '#BE123C'}
+          fillOpacity={isPaperMode ? 1 : 0.95}
+          stroke={isPaperMode ? '#000000' : '#E11D48'}
+          strokeWidth={isPaperMode ? 2.5 : 3}
+        />
+        {/* Internal Gastric Rugae Mucosal Folds */}
+        <g stroke={isPaperMode ? '#000000' : '#FDA4AF'} strokeWidth={1.5} fill="none" strokeLinecap="round" opacity={0.85}>
+          <path d="M 52 -35 Q 65 0 54 35 Q 40 60 22 68" />
+          <path d="M 34 -25 Q 42 10 32 45 Q 18 64 0 60" />
+          <path d="M 20 -15 Q 22 15 10 40" />
+        </g>
+        {/* Pyloric Sphincter Valve at exit */}
+        <ellipse cx="-16" cy="30" rx="5" ry="8" fill="none" stroke={isPaperMode ? '#000000' : '#FDE047'} strokeWidth={2} />
+      </g>
+
+      {/* 5. Pancreas (Golden glandular organ behind stomach) */}
+      <g id="pancreas-organ">
+        <path
+          d="M -18 32 C -5 26 28 22 55 18 C 65 16 68 24 55 28 C 30 36 -2 42 -16 44 C -22 45 -24 38 -18 32 Z"
+          fill={isPaperMode ? '#CBD5E1' : '#FBBF24'}
+          fillOpacity={isPaperMode ? 1 : 0.95}
+          stroke={isPaperMode ? '#000000' : '#D97706'}
+          strokeWidth={2}
+        />
+        {/* Main Pancreatic Duct (Wirsung) */}
+        <path
+          d="M 50 21 C 28 28 5 33 -14 36"
+          stroke={isPaperMode ? '#000000' : '#FFFFFF'}
+          strokeWidth={1.5}
+          strokeDasharray="3 2"
+          fill="none"
+        />
+      </g>
+
+      {/* 6. Duodenum (C-shaped beginning of Small Intestine) */}
+      <path
+        d="M -18 30 C -34 32 -38 52 -30 68 C -20 84 0 88 12 88"
+        stroke={isPaperMode ? '#000000' : '#F97316'}
+        strokeWidth={8}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M -18 30 C -34 32 -38 52 -30 68 C -20 84 0 88 12 88"
+        stroke={isPaperMode ? '#FFFFFF' : '#FFEDD5'}
+        strokeWidth={4}
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* 7. Small Intestine (Jejunum & Ileum - Highly Convoluted Loops) */}
+      <g id="small-intestine-loops">
+        {/* Primary background bed */}
+        <rect x="-56" y="90" width="112" height="74" rx="20" fill={isPaperMode ? '#E2E8F0' : '#FED7AA'} stroke={isPaperMode ? '#000000' : '#F97316'} strokeWidth={2} />
+        {/* Detailed undulating serpentine loops */}
+        <g stroke={isPaperMode ? '#000000' : '#EA580C'} strokeWidth={4} fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M -40 100 Q -20 92 0 100 Q 20 108 40 100" />
+          <path d="M 40 100 Q 48 112 36 120 Q 15 112 -10 120 Q -35 128 -42 118" />
+          <path d="M -42 118 Q -46 132 -30 138 Q 0 130 32 138 Q 44 142 38 152" />
+          <path d="M 38 152 Q 20 158 -5 152 Q -30 148 -40 156" />
+        </g>
+        {/* Circular folds (Plicae Circulares stipples) */}
+        {!isPaperMode && (
+          <g fill="#F97316" opacity="0.6">
+            {[-30, -10, 10, 30].map(xP => (
+              <circle key={`plicae-1-${xP}`} cx={xP} cy="100" r="1.5" />
+            ))}
+            {[-25, 0, 25].map(xP => (
+              <circle key={`plicae-2-${xP}`} cx={xP} cy="120" r="1.5" />
+            ))}
+            {[-20, 5, 25].map(xP => (
+              <circle key={`plicae-3-${xP}`} cx={xP} cy="140" r="1.5" />
+            ))}
+          </g>
+        )}
+      </g>
+
+      {/* 8. Large Intestine / Colon (Framing the abdominal cavity) */}
+      <g id="large-intestine-colon">
+        {/* Cecum & Vermiform Appendix (Bottom Right of Patient = Left on diagram) */}
+        {/* Cecum Pouch */}
+        <path
+          d="M -62 140 C -78 140 -82 165 -68 178 C -58 186 -50 175 -52 155 Z"
+          fill={isPaperMode ? '#CBD5E1' : '#B45309'}
+          stroke={isPaperMode ? '#000000' : '#78350F'}
+          strokeWidth={2.5}
+        />
+        {/* Vermiform Appendix (Finger-like worm extension) */}
+        <path
+          d="M -70 175 C -78 185 -85 200 -76 205 C -70 208 -66 195 -68 185"
+          stroke={isPaperMode ? '#000000' : '#DC2626'}
+          strokeWidth={3.5}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Ascending Colon (Upward right side of patient = left on viewer) */}
+        <path
+          d="M -66 150 L -66 75"
+          stroke={isPaperMode ? '#94A3B8' : '#D97706'}
+          strokeWidth={18}
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Hepatic (Right Colic) Flexure Curve */}
+        <path
+          d="M -66 82 C -66 60 -45 58 -30 58"
+          stroke={isPaperMode ? '#94A3B8' : '#D97706'}
+          strokeWidth={18}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Transverse Colon (Arching across upper abdomen) */}
+        <path
+          d="M -35 58 C 0 65 35 62 60 58"
+          stroke={isPaperMode ? '#94A3B8' : '#D97706'}
+          strokeWidth={18}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Splenic (Left Colic) Flexure Curve */}
+        <path
+          d="M 55 58 C 72 58 72 75 72 90"
+          stroke={isPaperMode ? '#94A3B8' : '#D97706'}
+          strokeWidth={18}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Descending Colon (Downward left side of patient = right on viewer) */}
+        <path
+          d="M 72 85 L 72 160"
+          stroke={isPaperMode ? '#94A3B8' : '#D97706'}
+          strokeWidth={18}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Sigmoid Colon (S-shaped curve into pelvis) */}
+        <path
+          d="M 72 155 C 72 180 35 185 20 195 C 10 202 5 210 5 220"
+          stroke={isPaperMode ? '#94A3B8' : '#D97706'}
+          strokeWidth={16}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Rectum (Straight pelvic terminal pouch) */}
+        <path
+          d="M 5 218 L 5 248"
+          stroke={isPaperMode ? '#64748B' : '#B45309'}
+          strokeWidth={16}
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Anal Canal & External Sphincter */}
+        <ellipse cx="5" cy="254" rx="7" ry="4" fill={isPaperMode ? '#000000' : '#78350F'} stroke={isPaperMode ? '#000000' : '#FDE047'} strokeWidth={2} />
+
+        {/* Haustra (Colon Sacculations / pouches) Outer Contours */}
+        <g stroke={isPaperMode ? '#000000' : '#78350F'} strokeWidth={1.5} fill="none">
+          {/* Ascending haustra notches */}
+          {[135, 115, 95, 75].map((yN, nIdx) => (
+            <path key={`haustra-asc-${nIdx}`} d={`M -75 ${yN} Q -66 ${yN - 4} -57 ${yN}`} />
+          ))}
+          {/* Transverse haustra notches */}
+          {[-25, -5, 15, 35, 50].map((xN, nIdx) => (
+            <path key={`haustra-tr-${nIdx}`} d={`M ${xN} 50 Q ${xN + 4} 60 ${xN} 68`} />
+          ))}
+          {/* Descending haustra notches */}
+          {[95, 115, 135, 155].map((yN, nIdx) => (
+            <path key={`haustra-desc-${nIdx}`} d={`M 63 ${yN} Q 72 ${yN - 4} 81 ${yN}`} />
+          ))}
+        </g>
+
+        {/* Taenia Coli (Longitudinal muscle band along colon) */}
+        <path
+          d="M -66 150 L -66 75 C -66 60 -45 58 -30 58 C 0 65 35 62 60 58 C 72 58 72 75 72 90 L 72 160 C 72 180 35 185 20 195"
+          stroke={isPaperMode ? '#000000' : '#FDE68A'}
+          strokeWidth={1.5}
+          fill="none"
+        />
+      </g>
+    </g>
+  );
+};
+
+/**
  * High-Resolution Stomach & Gastric Anatomy Diagram
  * Modeled on gastroenterology textbooks (esophagus, cardiac sphincter, fundus, body, rugae folds, pyloric antrum, pylorus, duodenum)
  */
@@ -1602,11 +1929,12 @@ export const VolcanoCrossSectionDiagram: React.FC<DiagramProps> = ({ isPaperMode
 
 /**
  * 21. High-Resolution Euglena Viridis / Gracilis Diagram
- * Authentically modeled on authoritative cytology reference diagrams (Science Facts / Modern Biology):
- * - Vertical fusiform spindle body with tapered posterior apex and invaginated anterior cytostome/reservoir.
- * - Outer Pellicle & Plasma Membrane in biological green.
- * - Long emergent whiplash flagellum with sinusoidal wave loop springing from basal body.
- * - Photoreceptor (Paraflagellar body) & red carotenoid Eyespot (Stigma).
+ * Authentically modeled on authoritative cytology reference diagrams (Science Facts / Campbell Biology / Modern Cytology):
+ * - Spindle-shaped fusiform body with anterior reservoir/cytostome at the TOP and tapered pointed apex at the posterior base.
+ * - Outer Pellicle & Plasma Membrane in biological green with pellicular helical striations.
+ * - Prominent, long whip-like locomotory Flagellum emerging from the anterior reservoir and sweeping upwards and outwards with undulating waves and mastigoneme hairlets.
+ * - Short non-emergent second flagellum and basal bodies (blepharoplasts) inside the reservoir.
+ * - Photoreceptor (Paraflagellar body) & red carotenoid Eyespot (Stigma) at the anterior reservoir.
  * - Pulsatile Contractile Vacuole with star-like radiating collecting canals.
  * - Prominent circular rose-pink Nucleus with dense central magenta Nucleolus.
  * - Rough & Smooth Endoplasmic Reticulum, stacked Golgi cisternae, Lysosomes, and Ribosomes.
@@ -1615,164 +1943,225 @@ export const VolcanoCrossSectionDiagram: React.FC<DiagramProps> = ({ isPaperMode
 export const EuglenaDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
   return (
     <g id="euglena-diagram-group" transform="translate(0, 0)">
-      {/* 1. Main Fusiform Cell Body: Pellicle (Outer layer) & Plasma Membrane */}
-      {/* Standard Textbook Morphology: Bilobed Anterior End with Reservoir at the TOP, pointed posterior tail at the BOTTOM */}
+      {/* 1. Emergent Long Whiplash Flagellum (Extending from basal body inside anterior reservoir, through cytostome aperture, sweeping high and gracefully across the left canvas) */}
+      <g id="euglena-flagellum">
+        {/* Glow / Outer contrast boundary for 100% visibility in both dark mode & paper print */}
+        <path
+          d="M 16 -115 C 14 -138 12 -158 8 -178 C 0 -215 -25 -255 -75 -275 C -135 -295 -195 -265 -225 -205 C -250 -145 -235 -70 -190 -8 C -145 50 -90 92 -38 118 C -15 130 5 130 18 118"
+          stroke={isPaperMode ? '#000000' : '#042F1A'}
+          strokeWidth={isPaperMode ? 8 : 9.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        {/* Primary vibrant flagellar axoneme (9+2 microtubule core) */}
+        <path
+          d="M 16 -115 C 14 -138 12 -158 8 -178 C 0 -215 -25 -255 -75 -275 C -135 -295 -195 -265 -225 -205 C -250 -145 -235 -70 -190 -8 C -145 50 -90 92 -38 118 C -15 130 5 130 18 118"
+          stroke={isPaperMode ? '#000000' : '#10B981'}
+          strokeWidth={isPaperMode ? 4.5 : 5.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        {/* High-visibility inner luminescent core filament */}
+        {!isPaperMode ? (
+          <path
+            d="M 16 -115 C 14 -138 12 -158 8 -178 C 0 -215 -25 -255 -75 -275 C -135 -295 -195 -265 -225 -205 C -250 -145 -235 -70 -190 -8 C -145 50 -90 92 -38 118 C -15 130 5 130 18 118"
+            stroke="#6EE7B7"
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            fill="none"
+          />
+        ) : (
+          <path
+            d="M 16 -115 C 14 -138 12 -158 8 -178 C 0 -215 -25 -255 -75 -275 C -135 -295 -195 -265 -225 -205 C -250 -145 -235 -70 -190 -8 C -145 50 -90 92 -38 118 C -15 130 5 130 18 118"
+            stroke="#FFFFFF"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            fill="none"
+          />
+        )}
+
+        {/* Lateral Mastigoneme Hairlet filaments along the undulating curve */}
+        <g stroke={isPaperMode ? '#000000' : '#34D399'} strokeWidth={isPaperMode ? 1.5 : 1.75} opacity={isPaperMode ? 0.8 : 0.85}>
+          {[
+            { x1: -25, y1: -230, x2: -35, y2: -246 },
+            { x1: -55, y1: -258, x2: -65, y2: -276 },
+            { x1: -90, y1: -275, x2: -102, y2: -294 },
+            { x1: -130, y1: -280, x2: -145, y2: -298 },
+            { x1: -168, y1: -268, x2: -185, y2: -282 },
+            { x1: -202, y1: -238, x2: -222, y2: -248 },
+            { x1: -224, y1: -195, x2: -245, y2: -200 },
+            { x1: -230, y1: -150, x2: -252, y2: -150 },
+            { x1: -220, y1: -105, x2: -242, y2: -100 },
+            { x1: -198, y1: -60, x2: -218, y2: -52 },
+            { x1: -168, y1: -20, x2: -186, y2: -8 },
+            { x1: -132, y1: 18, x2: -148, y2: 32 },
+            { x1: -92, y1: 58, x2: -106, y2: 74 },
+            { x1: -54, y1: 94, x2: -66, y2: 112 }
+          ].map((m, mIdx) => (
+            <line key={`mastigoneme-${mIdx}`} x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} />
+          ))}
+        </g>
+      </g>
+
+      {/* 2. Main Fusiform Cell Body: Rounded anterior lobes with gullet at top, tapering to posterior apex */}
+      {/* Outer Pellicle Envelope */}
       <path
-        d="M 0 160 
-           C -20 135 -48 90 -62 30 
-           C -74 -15 -70 -65 -50 -105 
-           C -40 -125 -25 -135 -15 -135 
-           C -6 -135 -2 -125 0 -115 
-           C 2 -125 8 -135 18 -135 
-           C 28 -135 40 -120 48 -98 
-           C 64 -55 68 -5 56 40 
-           C 44 95 18 138 0 160 Z"
+        d="M 0 220 
+           C -24 185 -48 135 -58 75 
+           C -68 10 -62 -65 -48 -115 
+           C -38 -145 -24 -170 -12 -176 
+           C -2 -180 6 -172 8 -155 
+           C 10 -138 18 -138 20 -155 
+           C 22 -172 28 -178 36 -172 
+           C 48 -160 54 -135 60 -105 
+           C 72 -50 70 10 58 70 
+           C 42 135 20 185 0 220 Z"
         fill={isPaperMode ? '#F8FAFC' : '#86EFAC'}
-        fillOpacity={isPaperMode ? 1 : 0.9}
+        fillOpacity={isPaperMode ? 1 : 0.94}
         stroke={isPaperMode ? '#000000' : '#166534'}
         strokeWidth={isPaperMode ? 3.5 : 4}
       />
 
-      {/* Plasma Membrane (Underlying inner border) */}
+      {/* Plasma Membrane (Concentric Inner Boundary) */}
       <path
-        d="M 0 152 
-           C -18 128 -44 84 -58 26 
-           C -69 -16 -66 -62 -47 -100 
-           C -38 -118 -25 -127 -16 -127 
-           C -8 -127 -3 -118 0 -108 
-           C 3 -118 9 -127 17 -127 
-           C 26 -127 36 -113 43 -93 
-           C 57 -51 61 -3 50 38 
-           C 39 90 16 132 0 152 Z"
+        d="M 0 212 
+           C -20 178 -42 130 -52 72 
+           C -60 10 -55 -62 -42 -110 
+           C -32 -138 -18 -160 -8 -166 
+           C 0 -170 6 -163 8 -148 
+           C 10 -134 18 -134 20 -148 
+           C 22 -163 26 -168 32 -163 
+           C 42 -152 48 -128 54 -100 
+           C 65 -48 64 12 52 70 
+           C 38 132 18 180 0 212 Z"
         fill={isPaperMode ? '#F1F5F9' : '#BBF7D0'}
-        fillOpacity={isPaperMode ? 1 : 0.85}
+        fillOpacity={isPaperMode ? 1 : 0.88}
         stroke={isPaperMode ? '#475569' : '#22C55E'}
         strokeWidth={isPaperMode ? 1.5 : 1.75}
       />
 
-      {/* Pellicular Helical Striations (Delicate fine helical protein strips) */}
-      <g opacity={isPaperMode ? 0.35 : 0.35}>
-        {[-95, -65, -30, 5, 40, 75, 110].map((yOff, sIdx) => (
+      {/* Pellicular Helical Striations (Faint diagonal interlocking protein strips) */}
+      <g opacity={isPaperMode ? 0.35 : 0.3}>
+        {[-140, -110, -70, -30, 10, 50, 90, 130, 170].map((yOff, sIdx) => (
           <path
             key={`pellicle-strip-${sIdx}`}
-            d={`M -52 ${yOff + 15} Q 0 ${yOff - 10} 52 ${yOff - 25}`}
+            d={`M -50 ${yOff - 20} Q 0 ${yOff - 10} 50 ${yOff + 15}`}
             stroke={isPaperMode ? '#000000' : '#15803D'}
-            strokeWidth={1.25}
+            strokeWidth={1.2}
             strokeDasharray="4 3"
             fill="none"
           />
         ))}
       </g>
 
-      {/* 2. Anterior Cytostome Gullet & Flask-Shaped Reservoir (Ampulla) at the TOP */}
+      {/* 3. Anterior Cytostome (Gullet) & Flask-Shaped Reservoir (Ampulla) at the Apex */}
       <path
-        d="M -6 -130 
-           C -4 -115 -6 -102 -12 -85 
-           C -18 -68 -2 -58 0 -58 
-           C 4 -58 18 -68 12 -85 
-           C 6 -102 4 -115 6 -130 Z"
+        d="M 6 -155 C 2 -145 4 -125 12 -115 C 20 -105 28 -108 32 -120 C 36 -132 34 -148 24 -155 Z"
         fill={isPaperMode ? '#CBD5E1' : '#DCFCE7'}
         fillOpacity={isPaperMode ? 1 : 0.95}
-        stroke={isPaperMode ? '#000000' : '#166534'}
+        stroke={isPaperMode ? '#000000' : '#16A34A'}
         strokeWidth={isPaperMode ? 2 : 2.5}
       />
 
       {/* Basal Blepharoplasts / Kinetosomes at floor of reservoir */}
-      <circle cx="-5" cy="-88" r="3.5" fill={isPaperMode ? '#000000' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
-      <circle cx="2" cy="-88" r="3" fill={isPaperMode ? '#000000' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
+      <circle cx="16" cy="-115" r="3" fill={isPaperMode ? '#000000' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
+      <circle cx="26" cy="-115" r="2.5" fill={isPaperMode ? '#000000' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
 
-      {/* Short non-emergent accessory flagellum inside reservoir */}
+      {/* Short non-emergent second flagellum root inside reservoir */}
       <path
-        d="M 2 -88 C 4 -80 2 -72 0 -66"
+        d="M 26 -115 C 24 -123 25 -131 26 -137"
         stroke={isPaperMode ? '#000000' : '#15803D'}
-        strokeWidth={isPaperMode ? 2.5 : 2.5}
+        strokeWidth={2}
         strokeLinecap="round"
         fill="none"
       />
 
-      {/* Flagellum Internal Root inside reservoir connecting basal body directly to cytostome */}
+      {/* Main flagellum intra-reservoir root connecting basal body to cytostome */}
       <path
-        d="M -5 -88 C -8 -100 -8 -114 -6 -128"
+        d="M 16 -115 C 15 -128 14 -142 12 -155"
         stroke={isPaperMode ? '#000000' : '#15803D'}
-        strokeWidth={isPaperMode ? 4 : 4.5}
+        strokeWidth={3.5}
         strokeLinecap="round"
         fill="none"
       />
 
-      {/* 3. Photoreceptor / Paraflagellar Body (Amber swelling on flagellar root) */}
+      {/* 4. Photoreceptor / Paraflagellar Body (Amber swelling on flagellar root) */}
       <ellipse
-        cx="-7"
-        cy="-105"
-        rx="4.5"
-        ry="6"
-        transform="rotate(15, -7, -105)"
+        cx="14"
+        cy="-126"
+        rx="4"
+        ry="5"
+        transform="rotate(15, 14, -126)"
         fill={isPaperMode ? '#000000' : '#EA580C'}
         stroke={isPaperMode ? '#000000' : '#FED7AA'}
         strokeWidth={1.25}
       />
 
-      {/* 4. Eyespot / Stigma (Cluster of bright red carotenoid granules on left of reservoir) */}
-      <g id="euglena-eyespot" transform="translate(-20, -98)">
-        <ellipse cx="0" cy="0" rx="8" ry="12" fill={isPaperMode ? '#000000' : '#DC2626'} stroke={isPaperMode ? '#000000' : '#FCA5A5'} strokeWidth={1} />
+      {/* 5. Eyespot / Stigma (Red carotenoid pigment granules on wall of reservoir) */}
+      <g id="euglena-eyespot" transform="translate(4, -120)">
+        <ellipse cx="0" cy="0" rx="7" ry="10" fill={isPaperMode ? '#000000' : '#DC2626'} stroke={isPaperMode ? '#000000' : '#FCA5A5'} strokeWidth={1} />
         {!isPaperMode ? (
           <g fill="#EF4444">
-            <circle cx="-2.5" cy="-3.5" r="2" />
-            <circle cx="1.5" cy="-2.5" r="1.8" />
-            <circle cx="-1.5" cy="1.5" r="2.2" />
-            <circle cx="2.5" cy="3" r="1.6" />
-            <circle cx="-2.5" cy="4.5" r="1.5" />
+            <circle cx="-2" cy="-3" r="1.8" />
+            <circle cx="1.5" cy="-2" r="1.6" />
+            <circle cx="-1" cy="1.5" r="2" />
+            <circle cx="2" cy="3" r="1.5" />
+            <circle cx="-2" cy="4" r="1.3" />
           </g>
         ) : (
           <g fill="#FFFFFF">
-            <circle cx="-2.5" cy="-3.5" r="1.5" />
-            <circle cx="1.5" cy="-2.5" r="1.3" />
-            <circle cx="-1.5" cy="1.5" r="1.5" />
-            <circle cx="2.5" cy="3" r="1.2" />
+            <circle cx="-2" cy="-3" r="1.3" />
+            <circle cx="1.5" cy="-2" r="1.1" />
+            <circle cx="-1" cy="1.5" r="1.3" />
+            <circle cx="2" cy="3" r="1.1" />
           </g>
         )}
       </g>
 
-      {/* 5. Pulsatile Osmoregulatory Contractile Vacuole with Star-Like Collecting Canals */}
-      <g id="euglena-contractile-vacuole" transform="translate(22, -92)">
-        {/* Radiating collecting canals */}
+      {/* 6. Osmoregulatory Contractile Vacuole with Star-Like Collecting Canals */}
+      <g id="euglena-contractile-vacuole" transform="translate(-24, -100)">
+        {/* Radiating star canaliculi ampullae */}
         {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, cIdx) => (
           <line
             key={`canal-${cIdx}`}
             x1="0"
             y1="0"
-            x2={Math.cos((angle * Math.PI) / 180) * 16}
-            y2={Math.sin((angle * Math.PI) / 180) * 16}
+            x2={Math.cos((angle * Math.PI) / 180) * 15}
+            y2={Math.sin((angle * Math.PI) / 180) * 15}
             stroke={isPaperMode ? '#000000' : '#38BDF8'}
             strokeWidth={isPaperMode ? 1.5 : 1.75}
             strokeLinecap="round"
           />
         ))}
-        {/* Central circular contractile vacuole vesicle */}
+        {/* Central contractile vacuole vesicle */}
         <circle
           cx="0"
           cy="0"
-          r="10.5"
+          r="9.5"
           fill={isPaperMode ? '#FFFFFF' : '#E0F2FE'}
           stroke={isPaperMode ? '#000000' : '#0284C7'}
           strokeWidth={isPaperMode ? 2 : 2.5}
         />
         {!isPaperMode && (
-          <circle cx="-3" cy="-3" r="3" fill="#FFFFFF" fillOpacity={0.7} />
+          <circle cx="-2.5" cy="-2.5" r="2.5" fill="#FFFFFF" fillOpacity={0.7} />
         )}
       </g>
 
-      {/* 6. Lobed Ribbon Chloroplasts (Radiating through cytoplasm) */}
+      {/* 7. Chloroplasts (Lobed emerald green plastids with central purple paramylon cores) */}
       {[
-        { x: -35, y: -45, rot: -30, scale: 0.95 },
-        { x: 38, y: -42, rot: 25, scale: 0.95 },
-        { x: -44, y: 15, rot: -15, scale: 1.05 },
-        { x: 42, y: 22, rot: 20, scale: 1.05 },
-        { x: -32, y: 75, rot: -35, scale: 0.9 },
-        { x: 34, y: 78, rot: 35, scale: 0.9 },
-        { x: 0, y: 115, rot: 5, scale: 0.85 }
+        { x: -32, y: -60, rot: -20, scale: 0.95 },
+        { x: 32, y: -60, rot: 20, scale: 0.95 },
+        { x: -40, y: -10, rot: -15, scale: 1.05 },
+        { x: 40, y: -10, rot: 15, scale: 1.05 },
+        { x: -35, y: 55, rot: -25, scale: 1.0 },
+        { x: 35, y: 55, rot: 25, scale: 1.0 },
+        { x: -25, y: 110, rot: -15, scale: 0.9 },
+        { x: 25, y: 110, rot: 15, scale: 0.9 },
+        { x: 0, y: 165, rot: 5, scale: 0.85 }
       ].map((cp, cIdx) => (
-        <g key={`chloroplast-lobe-${cIdx}`} transform={`translate(${cp.x}, ${cp.y}) rotate(${cp.rot}) scale(${cp.scale})`}>
-          {/* Main chloroplast body */}
+        <g key={`chloroplast-${cIdx}`} transform={`translate(${cp.x}, ${cp.y}) rotate(${cp.rot}) scale(${cp.scale})`}>
           <ellipse
             cx="0"
             cy="0"
@@ -1782,165 +2171,67 @@ export const EuglenaDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
             stroke={isPaperMode ? '#000000' : '#14532D'}
             strokeWidth={isPaperMode ? 1.5 : 2}
           />
-          {/* Thylakoid lamellae bands */}
+          {/* Internal thylakoid bands */}
           <path d="M -13 -3 Q 0 -5 13 -3" stroke={isPaperMode ? '#FFFFFF' : '#86EFAC'} strokeWidth={1} fill="none" opacity={0.6} />
           <path d="M -13 3 Q 0 5 13 3" stroke={isPaperMode ? '#FFFFFF' : '#86EFAC'} strokeWidth={1} fill="none" opacity={0.6} />
-          {/* Central Pyrenoid (Proteinaceous core with paramylon cap) */}
+          {/* Central Paramylon / Pyrenoid Center (Purple) */}
           <circle
             cx="0"
             cy="0"
             r="4.5"
-            fill={isPaperMode ? '#FFFFFF' : '#BBF7D0'}
-            stroke={isPaperMode ? '#000000' : '#15803D'}
+            fill={isPaperMode ? '#FFFFFF' : '#7C3AED'}
+            stroke={isPaperMode ? '#000000' : '#581C87'}
             strokeWidth={1.2}
           />
           <circle
             cx="0"
             cy="0"
             r="2"
-            fill={isPaperMode ? '#000000' : '#166534'}
+            fill={isPaperMode ? '#000000' : '#4C1D95'}
           />
         </g>
       ))}
 
-      {/* 7. Centrally Located Spherical Nucleus with Dense Nucleolus */}
-      <g id="euglena-nucleus" transform="translate(-4, 15)">
-        {/* Nuclear envelope (Double membrane with nuclear pores) */}
+      {/* 8. Central Rose-Pink Nucleus with Dense Spherical Nucleolus */}
+      <g id="euglena-nucleus" transform="translate(0, 0)">
+        {/* Double-membrane nuclear envelope */}
         <circle
           cx="0"
           cy="0"
-          r="28"
+          r="34"
           fill={isPaperMode ? '#E2E8F0' : '#FDA4AF'}
-          fillOpacity={isPaperMode ? 1 : 0.85}
+          fillOpacity={isPaperMode ? 1 : 0.9}
           stroke={isPaperMode ? '#000000' : '#E11D48'}
           strokeWidth={isPaperMode ? 2.5 : 3}
         />
-        {/* Chromatin granules / strands */}
+        {/* Nuclear chromatin stipples */}
         <g opacity={isPaperMode ? 0.4 : 0.6}>
-          {[-16, -9, 0, 10, 18].map((xP, i) => (
-            <circle key={`chromatin-${i}`} cx={xP} cy={((i % 2) ? -8 : 8)} r={1.5} fill={isPaperMode ? '#000000' : '#9F1239'} />
+          {[-18, -10, 0, 10, 18].map((xP, i) => (
+            <circle key={`chromatin-${i}`} cx={xP} cy={((i % 2) ? -10 : 10)} r={1.5} fill={isPaperMode ? '#000000' : '#9F1239'} />
           ))}
         </g>
-        {/* Dense central Endosome / Nucleolus */}
+        {/* Dense central spherical Nucleolus (rRNA synthesis site) */}
         <circle
           cx="0"
           cy="0"
-          r="10.5"
-          fill={isPaperMode ? '#000000' : '#C026D3'}
-          stroke={isPaperMode ? '#000000' : '#701A75'}
+          r="14"
+          fill={isPaperMode ? '#000000' : '#D946EF'}
+          stroke={isPaperMode ? '#000000' : '#A21CAF'}
           strokeWidth={isPaperMode ? 1.5 : 2}
         />
         {!isPaperMode && (
-          <circle cx="-3" cy="-3" r="3" fill="#F0ABFC" fillOpacity={0.7} />
+          <circle cx="-3" cy="-3" r="3.5" fill="#F0ABFC" fillOpacity={0.7} />
         )}
       </g>
 
-      {/* 8. Endoplasmic Reticulum (Rough ER with ribosomes & Smooth ER tubules) */}
-      <g id="euglena-er" transform="translate(18, 12)">
-        <path
-          d="M 8 -18 C 14 -12 18 -6 16 2 C 14 10 18 18 22 24"
-          stroke={isPaperMode ? '#000000' : '#D97706'}
-          strokeWidth={isPaperMode ? 2 : 2.5}
-          fill="none"
-        />
-        <path
-          d="M 12 -14 C 18 -8 22 -2 20 6 C 18 14 22 20 26 26"
-          stroke={isPaperMode ? '#000000' : '#F59E0B'}
-          strokeWidth={isPaperMode ? 1.5 : 1.75}
-          fill="none"
-        />
-        {/* Ribosomes attached to RER */}
-        {!isPaperMode && (
-          <g fill="#78350F">
-            <circle cx="10" cy="-14" r="1.3" />
-            <circle cx="15" cy="-7" r="1.3" />
-            <circle cx="18" cy="1" r="1.3" />
-            <circle cx="16" cy="9" r="1.3" />
-            <circle cx="21" cy="18" r="1.3" />
-          </g>
-        )}
-      </g>
-
-      {/* 9. Stacked Golgi Dictyosome Cisternae */}
-      <g id="euglena-golgi" transform="translate(-16, -18) rotate(15)">
-        <path d="M -16 -6 C -8 -9 8 -9 16 -6" stroke={isPaperMode ? '#000000' : '#EC4899'} strokeWidth={isPaperMode ? 2.5 : 3} strokeLinecap="round" fill="none" />
-        <path d="M -14 -1 C -7 -4 7 -4 14 -1" stroke={isPaperMode ? '#000000' : '#F472B6'} strokeWidth={isPaperMode ? 2.5 : 3} strokeLinecap="round" fill="none" />
-        <path d="M -12 4 C -6 1 6 1 12 4" stroke={isPaperMode ? '#000000' : '#F472B6'} strokeWidth={isPaperMode ? 2 : 2.5} strokeLinecap="round" fill="none" />
-        {/* Secretory vesicles budding off Golgi */}
-        <circle cx="-17" cy="-7" r="2" fill={isPaperMode ? '#000000' : '#FBCFE8'} />
-        <circle cx="17" cy="-5" r="2.2" fill={isPaperMode ? '#000000' : '#FBCFE8'} />
-        <circle cx="14" cy="2" r="1.8" fill={isPaperMode ? '#000000' : '#FBCFE8'} />
-      </g>
-
-      {/* 10. Mitochondria with Folded Cristae */}
-      {/* Upper-left mitochondrion */}
-      <g id="mitochondria-1" transform="translate(-32, -68) rotate(25)">
-        <rect
-          x="-9"
-          y="-5.5"
-          width="18"
-          height="11"
-          rx="5.5"
-          fill={isPaperMode ? '#1E293B' : '#DC2626'}
-          stroke={isPaperMode ? '#000000' : '#EF4444'}
-          strokeWidth={1.5}
-        />
-        <path d="M -5 -2.5 L -3 2.5 L 0 -2.5 L 3 2.5 L 5 -2.5" stroke={isPaperMode ? '#FFFFFF' : '#FDE047'} strokeWidth={1.2} fill="none" />
-      </g>
-
-      {/* Upper-right mitochondrion */}
-      <g id="mitochondria-2" transform="translate(34, -64) rotate(-20)">
-        <rect
-          x="-9"
-          y="-5.5"
-          width="18"
-          height="11"
-          rx="5.5"
-          fill={isPaperMode ? '#1E293B' : '#DC2626'}
-          stroke={isPaperMode ? '#000000' : '#EF4444'}
-          strokeWidth={1.5}
-        />
-        <path d="M -5 -2.5 L -3 2.5 L 0 -2.5 L 3 2.5 L 5 -2.5" stroke={isPaperMode ? '#FFFFFF' : '#FDE047'} strokeWidth={1.2} fill="none" />
-      </g>
-
-      {/* Lower-left mitochondrion */}
-      <g id="mitochondria-3" transform="translate(-36, 52) rotate(-15)">
-        <rect
-          x="-9"
-          y="-5.5"
-          width="18"
-          height="11"
-          rx="5.5"
-          fill={isPaperMode ? '#1E293B' : '#DC2626'}
-          stroke={isPaperMode ? '#000000' : '#EF4444'}
-          strokeWidth={1.5}
-        />
-        <path d="M -5 -2.5 L -3 2.5 L 0 -2.5 L 3 2.5 L 5 -2.5" stroke={isPaperMode ? '#FFFFFF' : '#FDE047'} strokeWidth={1.2} fill="none" />
-      </g>
-
-      {/* Lower-right mitochondrion */}
-      <g id="mitochondria-4" transform="translate(35, 58) rotate(30)">
-        <rect
-          x="-8"
-          y="-5"
-          width="16"
-          height="10"
-          rx="5"
-          fill={isPaperMode ? '#1E293B' : '#DC2626'}
-          stroke={isPaperMode ? '#000000' : '#EF4444'}
-          strokeWidth={1.5}
-        />
-        <path d="M -4 -2 L -2 2 L 0 -2 L 2 2 L 4 -2" stroke={isPaperMode ? '#FFFFFF' : '#FDE047'} strokeWidth={1.2} fill="none" />
-      </g>
-
-      {/* 11. Paramylon Reserve Granules (Dark violet/purple oval carbohydrate storage grains) */}
+      {/* 9. Distinct Paramylon Reserve Granules (Crystalline β-1,3-glucan carbohydrate storage) */}
       {[
-        { x: 2, y: -30, rx: 7, ry: 4.5, rot: 10 },
-        { x: 38, y: -10, rx: 7, ry: 4.5, rot: -20 },
-        { x: -10, y: 48, rx: 7, ry: 4.5, rot: 35 },
-        { x: 6, y: 70, rx: 6, ry: 4, rot: -15 },
-        { x: -26, y: 92, rx: 5.5, ry: 3.5, rot: 25 },
-        { x: 28, y: 98, rx: 5.5, ry: 3.5, rot: -30 }
+        { x: -14, y: -26, rx: 8, ry: 5, rot: 10 },
+        { x: 26, y: -26, rx: 8, ry: 5, rot: -20 },
+        { x: -12, y: 52, rx: 8, ry: 5, rot: 35 },
+        { x: 18, y: 48, rx: 7, ry: 4.5, rot: -15 },
+        { x: -16, y: 130, rx: 6.5, ry: 4, rot: 25 },
+        { x: 16, y: 135, rx: 6.5, ry: 4, rot: -30 }
       ].map((pm, pIdx) => (
         <g key={`paramylon-grain-${pIdx}`} transform={`translate(${pm.x}, ${pm.y}) rotate(${pm.rot})`}>
           <ellipse
@@ -1948,110 +2239,25 @@ export const EuglenaDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
             cy="0"
             rx={pm.rx}
             ry={pm.ry}
-            fill={isPaperMode ? '#000000' : '#581C87'}
+            fill={isPaperMode ? '#000000' : '#6B21A8'}
             stroke={isPaperMode ? '#000000' : '#C084FC'}
-            strokeWidth={1}
+            strokeWidth={1.5}
           />
           {!isPaperMode && (
-            <ellipse cx="-1.5" cy="-1" rx={pm.rx * 0.4} ry={pm.ry * 0.4} fill="#E9D5FF" fillOpacity={0.7} />
+            <ellipse cx="-1.5" cy="-1" rx={pm.rx * 0.45} ry={pm.ry * 0.45} fill="#F3E8FF" fillOpacity={0.75} />
           )}
         </g>
       ))}
 
-      {/* 12. Lysosomes (Small purple circular vesicles) */}
-      <g id="lysosomes">
-        <circle cx="16" cy="42" r="3.5" fill={isPaperMode ? '#000000' : '#9333EA'} stroke={isPaperMode ? '#000000' : '#F3E8FF'} strokeWidth={1} />
-        <circle cx="-22" cy="62" r="3.5" fill={isPaperMode ? '#000000' : '#9333EA'} stroke={isPaperMode ? '#000000' : '#F3E8FF'} strokeWidth={1} />
-        <circle cx="26" cy="-2" r="3" fill={isPaperMode ? '#000000' : '#9333EA'} stroke={isPaperMode ? '#000000' : '#F3E8FF'} strokeWidth={1} />
-      </g>
-
-      {/* 13. Free Ribosomes (Scattered dark stipples in cytoplasm) */}
-      <g id="free-ribosomes" fill={isPaperMode ? '#000000' : '#1E293B'} opacity={isPaperMode ? 0.5 : 0.7}>
-        <circle cx="-16" cy="-70" r="1.3" />
-        <circle cx="18" cy="-68" r="1.3" />
-        <circle cx="-35" cy="-25" r="1.3" />
-        <circle cx="-20" cy="-35" r="1.3" />
-        <circle cx="-40" cy="18" r="1.3" />
-        <circle cx="-30" cy="40" r="1.3" />
-        <circle cx="2" cy="46" r="1.3" />
-        <circle cx="20" cy="58" r="1.3" />
-        <circle cx="-4" cy="78" r="1.3" />
-      </g>
-
-      {/* 14. PROMINENT LONG EMERGENT LOCOMOTORY WHIPLASH FLAGELLUM (Attached directly to Basal Body at floor of Reservoir) */}
-      {/* Originates at basal body (-5, -88), passes continuously through cytostome (-6, -128), and sweeps forward into an undulating sinusoidal locomotory wave */}
-      <g id="euglena-flagellum-on-top">
-        {/* Contrast outline stroke ensuring 100% visibility on white, paper, or dark backgrounds */}
-        <path
-          d="M -5 -88 
-             C -8 -104 -8 -118 -6 -128 
-             C -25 -165 -65 -205 -125 -225 
-             C -175 -242 -215 -246 -240 -238 
-             C -265 -230 -288 -200 -282 -155 
-             C -276 -115 -248 -85 -268 -45"
-          stroke={isPaperMode ? '#000000' : '#052E16'}
-          strokeWidth={isPaperMode ? 6 : 8.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        {/* Main Axonemal Shaft (9+2 Microtubule Core) */}
-        <path
-          d="M -5 -88 
-             C -8 -104 -8 -118 -6 -128 
-             C -25 -165 -65 -205 -125 -225 
-             C -175 -242 -215 -246 -240 -238 
-             C -265 -230 -288 -200 -282 -155 
-             C -276 -115 -248 -85 -268 -45"
-          stroke={isPaperMode ? '#000000' : '#22C55E'}
-          strokeWidth={isPaperMode ? 5 : 5.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        {/* Inner Paraxial Rod / Axoneme Core Highlight */}
-        <path
-          d="M -5 -88 
-             C -8 -104 -8 -118 -6 -128 
-             C -25 -165 -65 -205 -125 -225 
-             C -175 -242 -215 -246 -240 -238 
-             C -265 -230 -288 -200 -282 -155 
-             C -276 -115 -248 -85 -268 -45"
-          stroke={isPaperMode ? '#FFFFFF' : '#86EFAC'}
-          strokeWidth={isPaperMode ? 1.75 : 2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        {/* Microscopic Mastigoneme Hair Filaments along the Locomotive Wave */}
-        <g opacity={isPaperMode ? 0.8 : 0.9}>
-          {[
-            { x: -50, y: -195, dx: -3, dy: -8 },
-            { x: -85, y: -215, dx: -5, dy: -8 },
-            { x: -125, y: -228, dx: -6, dy: -7 },
-            { x: -165, y: -242, dx: -5, dy: -7 },
-            { x: -205, y: -246, dx: -4, dy: -7 },
-            { x: -240, y: -238, dx: -7, dy: -4 },
-            { x: -268, y: -215, dx: -8, dy: -2 },
-            { x: -282, y: -180, dx: -8, dy: 1 },
-            { x: -280, y: -140, dx: -8, dy: 4 },
-            { x: -265, y: -100, dx: -7, dy: 6 },
-            { x: -255, y: -65, dx: -6, dy: 6 }
-          ].map((hair, hIdx) => (
-            <line
-              key={`mastigoneme-${hIdx}`}
-              x1={hair.x}
-              y1={hair.y}
-              x2={hair.x + hair.dx}
-              y2={hair.y + hair.dy}
-              stroke={isPaperMode ? '#000000' : '#15803D'}
-              strokeWidth={isPaperMode ? 1.5 : 1.75}
-              strokeLinecap="round"
-            />
-          ))}
-        </g>
-        {/* Terminal tapered whiplash tip */}
-        <circle cx="-268" cy="-45" r={isPaperMode ? 3.5 : 4} fill={isPaperMode ? '#000000' : '#15803D'} />
+      {/* 10. Granular Cytoplasm (Ground cytosol matrix) */}
+      <g opacity={isPaperMode ? 0.25 : 0.4} fill={isPaperMode ? '#000000' : '#14532D'}>
+        <circle cx="-20" cy="-40" r="1.5" />
+        <circle cx="20" cy="-40" r="1.5" />
+        <circle cx="-25" cy="20" r="1.5" />
+        <circle cx="22" cy="25" r="1.5" />
+        <circle cx="-8" cy="80" r="1.5" />
+        <circle cx="10" cy="85" r="1.5" />
+        <circle cx="0" cy="140" r="1.5" />
       </g>
     </g>
   );
@@ -2552,15 +2758,994 @@ export const ParameciumDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
 };
 
 /**
+ * 24. High-Resolution Female Reproductive System Diagram (Coronal / Frontal Anatomical Section)
+ * Authoritative anatomical model based on Gray's Anatomy & OpenStax Anatomy & Physiology:
+ * - Pear-shaped Uterus: Rounded superior Fundus dome above tubal junctions, Corpus (body), and Isthmus
+ * - Distinct Uterine Layers: Outer Perimetrium (serosa), thick middle Myometrium with muscular bundles, and inner vascular Endometrium lining the triangular Uterine Cavity
+ * - Distinct Lumen: Central triangular Uterine Cavity (internal lumen space)
+ * - Bilateral Fallopian Tubes (Oviducts): Narrow Isthmus, sweeping dilated Ampulla (physiological site of fertilization), and Infundibulum
+ * - Feathered Fimbriae draping around the ovaries with the elongated Ovarian Fimbria
+ * - True Almond-Shaped Ovaries: Cortex depicting follicular development (primordial, primary, Graafian follicle with oocyte, and Corpus Luteum)
+ * - True Utero-Ovarian Ligaments: Distinct fibromuscular cords connecting medial pole of ovary to lateral uterine cornu
+ * - Cervix: Internal Os, Endocervical Canal with palmate folds, External Os, and Cervical Fornices
+ * - Vagina: Muscular birth canal with transverse Vaginal Rugae folds
+ */
+export const FemaleReproductiveSystemDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
+  return (
+    <g id="female-reproductive-diagram-group" transform="translate(0, 10)">
+      {/* 1. Peritoneal Broad Ligament Drape & Pelvic Wall Contour */}
+      <path
+        d="M -235 -10 
+           C -175 -60 -115 -70 -55 -70 
+           L 55 -70 
+           C 115 -70 175 -60 235 -10 
+           C 215 65 145 105 0 105 
+           C -145 105 -215 65 -235 -10 Z"
+        fill={isPaperMode ? '#F8FAFC' : '#475569'}
+        fillOpacity={isPaperMode ? 0.45 : 0.18}
+        stroke={isPaperMode ? '#CBD5E1' : '#64748B'}
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+
+      {/* 2. Suspensory Ligaments of the Ovary (Infundibulopelvic Ligaments with Ovarian Vessels) */}
+      <path
+        d="M -245 -45 C -215 -40 -195 -15 -180 5"
+        stroke={isPaperMode ? '#94A3B8' : '#93C5FD'}
+        strokeWidth={isPaperMode ? 2.5 : 3.5}
+        strokeDasharray="3 2"
+        fill="none"
+      />
+      <path
+        d="M 245 -45 C 215 -40 195 -15 180 5"
+        stroke={isPaperMode ? '#94A3B8' : '#93C5FD'}
+        strokeWidth={isPaperMode ? 2.5 : 3.5}
+        strokeDasharray="3 2"
+        fill="none"
+      />
+
+      {/* 3. Fallopian Tubes (Uterine Tubes / Oviducts) - Bilateral sweeping muscular conduits */}
+      {/* Left Fallopian Tube: Isthmus -> Ampulla -> Infundibulum */}
+      <g id="left-fallopian-tube">
+        {/* Outer muscular wall */}
+        <path
+          id="anchor-frs-fallopian-tube"
+          d="M -48 -60 
+             C -90 -95 -145 -95 -185 -70 
+             C -210 -50 -220 -20 -205 10"
+          fill="none"
+          stroke={isPaperMode ? '#000000' : '#DB2777'}
+          strokeWidth={isPaperMode ? 8.5 : 11}
+          strokeLinecap="round"
+        />
+        {/* Inner mucosal lumen */}
+        <path
+          d="M -48 -60 
+             C -90 -95 -145 -95 -185 -70 
+             C -210 -50 -220 -20 -205 10"
+          fill="none"
+          stroke={isPaperMode ? '#FFFFFF' : '#FCE7F3'}
+          strokeWidth={isPaperMode ? 3.5 : 4.5}
+          strokeLinecap="round"
+        />
+      </g>
+
+      {/* Right Fallopian Tube: Isthmus -> Ampulla -> Infundibulum */}
+      <g id="right-fallopian-tube">
+        {/* Outer muscular wall */}
+        <path
+          d="M 48 -60 
+             C 90 -95 145 -95 185 -70 
+             C 210 -50 220 -20 205 10"
+          fill="none"
+          stroke={isPaperMode ? '#000000' : '#DB2777'}
+          strokeWidth={isPaperMode ? 8.5 : 11}
+          strokeLinecap="round"
+        />
+        {/* Inner mucosal lumen */}
+        <path
+          d="M 48 -60 
+             C 90 -95 145 -95 185 -70 
+             C 210 -50 220 -20 205 10"
+          fill="none"
+          stroke={isPaperMode ? '#FFFFFF' : '#FCE7F3'}
+          strokeWidth={isPaperMode ? 3.5 : 4.5}
+          strokeLinecap="round"
+        />
+      </g>
+
+      {/* 4. Infundibulum & Feathered Fimbriae surrounding the Ovaries */}
+      {/* Left Fimbriae */}
+      <g id="left-fimbriae" transform="translate(-205, 10)">
+        <g id="anchor-frs-fimbriae">
+          <path d="M 0 0 C -12 12 -18 28 -12 40 M 0 0 C -6 18 0 32 8 40 M 0 0 C 10 14 18 26 22 35 M 0 0 C 15 8 28 14 32 24" stroke={isPaperMode ? '#000000' : '#E11D48'} strokeWidth={isPaperMode ? 2 : 2.5} fill="none" strokeLinecap="round" />
+          {/* Elongated Ovarian Fimbria touching upper ovarian pole */}
+          <path d="M 10 14 C 20 20 28 25 35 22" stroke={isPaperMode ? '#000000' : '#BE123C'} strokeWidth={isPaperMode ? 2.5 : 3} fill="none" strokeLinecap="round" />
+        </g>
+      </g>
+      {/* Right Fimbriae */}
+      <g id="right-fimbriae" transform="translate(205, 10)">
+        <path d="M 0 0 C 12 12 18 28 12 40 M 0 0 C 6 18 0 32 -8 40 M 0 0 C -10 14 -18 26 -22 35 M 0 0 C -15 8 -28 14 -32 24" stroke={isPaperMode ? '#000000' : '#E11D48'} strokeWidth={isPaperMode ? 2 : 2.5} fill="none" strokeLinecap="round" />
+        {/* Elongated Ovarian Fimbria touching upper ovarian pole */}
+        <path d="M -10 14 C -20 20 -28 25 -35 22" stroke={isPaperMode ? '#000000' : '#BE123C'} strokeWidth={isPaperMode ? 2.5 : 3} fill="none" strokeLinecap="round" />
+      </g>
+
+      {/* 5. Utero-Ovarian Ligament (Distinct fibromuscular bands attaching ovary to uterine cornu) */}
+      {/* Left Ovarian Ligament */}
+      <g id="left-ovarian-ligament-group">
+        <path
+          d="M -48 -38 C -85 -28 -120 -8 -140 22"
+          stroke={isPaperMode ? '#000000' : '#FDA4AF'}
+          strokeWidth={isPaperMode ? 4 : 5.5}
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M -48 -38 C -85 -28 -120 -8 -140 22"
+          stroke={isPaperMode ? '#FFFFFF' : '#FB7185'}
+          strokeWidth={isPaperMode ? 1.5 : 2}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </g>
+      {/* Right Ovarian Ligament */}
+      <g id="right-ovarian-ligament-group">
+        <path
+          id="anchor-frs-ovarian-ligament"
+          d="M 48 -38 C 85 -28 120 -8 140 22"
+          stroke={isPaperMode ? '#000000' : '#FDA4AF'}
+          strokeWidth={isPaperMode ? 4 : 5.5}
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M 48 -38 C 85 -28 120 -8 140 22"
+          stroke={isPaperMode ? '#FFFFFF' : '#FB7185'}
+          strokeWidth={isPaperMode ? 1.5 : 2}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </g>
+
+      {/* 6. True Almond-Shaped Ovaries (Cross-Section showing follicular maturation & Corpus Luteum) */}
+      {/* Left Ovary */}
+      <g id="left-ovary" transform="translate(-165, 25)">
+        <ellipse cx="0" cy="0" rx="28" ry="20" fill={isPaperMode ? '#FFFFFF' : '#FEF3C7'} stroke={isPaperMode ? '#000000' : '#D97706'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        {/* Primordial & Primary Follicles */}
+        <circle cx="-14" cy="-5" r="3" fill={isPaperMode ? '#E2E8F0' : '#FDE047'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
+        <circle cx="-6" cy="-10" r="4" fill={isPaperMode ? '#E2E8F0' : '#FDE047'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
+        {/* Secondary Growing Antral Follicle */}
+        <circle cx="2" cy="-6" r="6" fill={isPaperMode ? '#CBD5E1' : '#FDE68A'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1.2} />
+        <circle cx="2" cy="-6" r="2" fill={isPaperMode ? '#000000' : '#EF4444'} />
+        {/* Mature Graafian Follicle with large fluid Antrum and Oocyte */}
+        <circle cx="10" cy="3" r="8.5" fill={isPaperMode ? '#CBD5E1' : '#FEF08A'} stroke={isPaperMode ? '#000000' : '#92400E'} strokeWidth={1.5} />
+        <circle cx="10" cy="3" r="2.8" fill={isPaperMode ? '#000000' : '#DC2626'} />
+        {/* Corpus Luteum (Yellow endocrine body) */}
+        <path d="M -8 7 C -4 14 4 14 9 8 C 5 5 -3 5 -8 7 Z" fill={isPaperMode ? '#94A3B8' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1.2} />
+      </g>
+
+      {/* Right Ovary */}
+      <g id="right-ovary" transform="translate(165, 25)">
+        <g id="anchor-frs-ovary">
+          <ellipse cx="0" cy="0" rx="28" ry="20" fill={isPaperMode ? '#FFFFFF' : '#FEF3C7'} stroke={isPaperMode ? '#000000' : '#D97706'} strokeWidth={isPaperMode ? 2 : 2.5} />
+          {/* Follicles */}
+          <circle cx="14" cy="-5" r="3" fill={isPaperMode ? '#E2E8F0' : '#FDE047'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
+          <circle cx="6" cy="-10" r="4" fill={isPaperMode ? '#E2E8F0' : '#FDE047'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1} />
+          <circle cx="-2" cy="-6" r="6" fill={isPaperMode ? '#CBD5E1' : '#FDE68A'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1.2} />
+          <circle cx="-2" cy="-6" r="2" fill={isPaperMode ? '#000000' : '#EF4444'} />
+          {/* Mature Graafian Follicle */}
+          <circle cx="-10" cy="3" r="8.5" fill={isPaperMode ? '#CBD5E1' : '#FEF08A'} stroke={isPaperMode ? '#000000' : '#92400E'} strokeWidth={1.5} />
+          <circle cx="-10" cy="3" r="2.8" fill={isPaperMode ? '#000000' : '#DC2626'} />
+          {/* Corpus Luteum */}
+          <path d="M 8 7 C 4 14 -4 14 -9 8 C -5 5 3 5 8 7 Z" fill={isPaperMode ? '#94A3B8' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth={1.2} />
+        </g>
+      </g>
+
+      {/* 7. Uterus External Muscular Wall & Myometrium (Convex Fundus + Corpus + Isthmus) */}
+      {/* Outer Serosa / Perimetrium & Thick Myometrium */}
+      <path
+        id="anchor-frs-fundus"
+        d="M -52 -55 
+           C -32 -88 32 -88 52 -55 
+           C 70 -35 60 15 32 70 
+           C 26 84 22 98 20 115 
+           L -20 115 
+           C -22 98 -26 84 -32 70 
+           C -60 15 -70 -35 -52 -55 Z"
+        fill={isPaperMode ? '#FFFFFF' : '#9D174D'}
+        stroke={isPaperMode ? '#000000' : '#831843'}
+        strokeWidth={isPaperMode ? 3 : 3.5}
+      />
+
+      {/* Myometrial Interlacing Smooth Muscle Texture & Anchor */}
+      <g id="anchor-frs-myometrium">
+        {!isPaperMode && (
+          <g opacity="0.4">
+            <path d="M -44 -48 C -20 -72 20 -72 44 -48" stroke="#FCE7F3" strokeWidth="2.5" fill="none" />
+            <path d="M -40 -20 C -20 -38 20 -38 40 -20" stroke="#FCE7F3" strokeWidth="2.5" fill="none" />
+            <path d="M -30 15 C -15 2 15 2 30 15" stroke="#FCE7F3" strokeWidth="2" fill="none" />
+            <path d="M -24 50 C -12 38 12 38 24 50" stroke="#FCE7F3" strokeWidth="2" fill="none" />
+          </g>
+        )}
+      </g>
+
+      {/* 8. Endometrium Layer (Deep Crimson Vascular Mucosal Lining) */}
+      <path
+        id="anchor-frs-endometrium"
+        d="M -35 -40 
+           C -18 -58 18 -58 35 -40 
+           C 40 -25 28 25 15 68 
+           L -15 68 
+           C -28 25 -40 -25 -35 -40 Z"
+        fill={isPaperMode ? '#E2E8F0' : '#881337'}
+        stroke={isPaperMode ? '#000000' : '#E11D48'}
+        strokeWidth={isPaperMode ? 2 : 2.5}
+      />
+
+      {/* 9. Uterine Cavity (Triangular Internal Lumen Space) */}
+      <path
+        id="anchor-frs-uterine-cavity"
+        d="M -22 -36 
+           C -10 -46 10 -46 22 -36 
+           C 24 -22 14 25 7 62 
+           L -7 62 
+           C -14 25 -24 -22 -22 -36 Z"
+        fill={isPaperMode ? '#F8FAFC' : '#1E1B4B'}
+        stroke={isPaperMode ? '#000000' : '#FDA4AF'}
+        strokeWidth={isPaperMode ? 1.5 : 1.75}
+      />
+
+      {/* 10. Cervix & Endocervical Canal */}
+      <g id="cervix-group" transform="translate(0, 85)">
+        <g id="anchor-frs-cervix">
+          {/* Cervical Muscular Walls */}
+          <path
+            d="M -26 -15 L -22 28 L 22 28 L 26 -15 Z"
+            fill={isPaperMode ? '#FFFFFF' : '#831843'}
+            stroke={isPaperMode ? '#000000' : '#701A75'}
+            strokeWidth={isPaperMode ? 2 : 2.5}
+          />
+          {/* Endocervical Canal Spindle */}
+          <path
+            d="M 0 -17 C -4 0 -4 12 0 26 C 4 12 4 0 0 -17 Z"
+            fill={isPaperMode ? '#E2E8F0' : '#FCE7F3'}
+            stroke={isPaperMode ? '#000000' : '#FB7185'}
+            strokeWidth={1.5}
+          />
+          {/* Internal Os constriction point (opening into uterine cavity) */}
+          <circle cx="0" cy="-16" r="3.5" fill={isPaperMode ? '#000000' : '#F43F5E'} />
+          {/* External Os opening into vaginal vault */}
+          <circle cx="0" cy="25" r="3.5" fill={isPaperMode ? '#000000' : '#F43F5E'} />
+          {/* Cervical Fornices (Lateral vaginal recesses flanking the protruding cervix) */}
+          <path d="M -30 20 C -26 10 -23 15 -22 28" stroke={isPaperMode ? '#000000' : '#FDA4AF'} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+          <path d="M 30 20 C 26 10 23 15 22 28" stroke={isPaperMode ? '#000000' : '#FDA4AF'} strokeWidth={2.5} fill="none" strokeLinecap="round" />
+        </g>
+      </g>
+
+      {/* 11. Vagina & Vaginal Rugae Ridges */}
+      <g id="vagina-group" transform="translate(0, 138)">
+        <g id="anchor-frs-vagina">
+          {/* Vaginal Distensible Muscular Canal */}
+          <path
+            d="M -30 -22 L -32 45 C -20 52 20 52 32 45 L 30 -22 Z"
+            fill={isPaperMode ? '#F1F5F9' : '#500724'}
+            stroke={isPaperMode ? '#000000' : '#701A75'}
+            strokeWidth={isPaperMode ? 2.5 : 3}
+          />
+          {/* Transverse Vaginal Rugae Mucosal Ridges */}
+          <path d="M -20 -8 Q 0 0 20 -8" stroke={isPaperMode ? '#000000' : '#F472B6'} strokeWidth={1.75} fill="none" />
+          <path d="M -22 10 Q 0 18 22 10" stroke={isPaperMode ? '#000000' : '#F472B6'} strokeWidth={1.75} fill="none" />
+          <path d="M -22 28 Q 0 36 22 28" stroke={isPaperMode ? '#000000' : '#F472B6'} strokeWidth={1.75} fill="none" />
+          <line x1="0" y1="-22" x2="0" y2="45" stroke={isPaperMode ? '#000000' : '#FBCFE8'} strokeWidth={1.5} strokeDasharray="3 2" />
+        </g>
+      </g>
+    </g>
+  );
+};
+
+/**
+ * 25. High-Resolution Global Carbon Cycle Diagram (Biogeochemical Flows & Sinks)
+ * Textbook-accurate representation based on Campbell Biology & Earth Systems Science:
+ * - Upper Troposphere: Atmospheric CO₂ Reservoir (420+ ppm)
+ * - Terrestrial Ecosystem: Forest canopy absorbing CO₂ via Photosynthesis
+ * - Respiration: Plant respiration & Animal respiration (grazing fauna) releasing CO₂
+ * - Soil Dynamics: Microbial decomposition of organic leaf litter & detritus
+ * - Geological Strata: Subterranean fossil fuels (coal, oil, natural gas) forming deep carbon sinks
+ * - Anthropogenic Emissions: Power station & vehicle combustion releasing fossil carbon
+ * - Oceanic Sink: Air-sea gas dissolution, marine phytoplankton photosynthesis, and seafloor carbonate sedimentation
+ */
+export const CarbonCycleDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
+  return (
+    <g id="carbon-cycle-diagram-group" transform="translate(0, 0)">
+      {/* 1. Sky & Atmosphere Area */}
+      <rect x="-250" y="-150" width="500" height="90" rx="6" fill={isPaperMode ? '#FFFFFF' : '#0F172A'} stroke={isPaperMode ? '#CBD5E1' : '#1E293B'} strokeWidth={1} />
+      {/* Atmospheric CO2 Reservoir Box */}
+      <g transform="translate(0, -105)">
+        <rect x="-120" y="-22" width="240" height="44" rx="8" fill={isPaperMode ? '#F8FAFC' : '#1E293B'} stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        <text x="0" y="-2" fill={isPaperMode ? '#000000' : '#38BDF8'} fontSize="13" fontWeight="bold" fontFamily="system-ui, sans-serif" textAnchor="middle">ATMOSPHERIC CO₂ POOL</text>
+        <text x="0" y="14" fill={isPaperMode ? '#475569' : '#94A3B8'} fontSize="10" fontFamily="system-ui, sans-serif" textAnchor="middle">~850 Gigatons Carbon • Global Carbon Reservoir</text>
+      </g>
+
+      {/* 2. Terrestrial Landscape (Left & Center) & Ocean Basin (Right) */}
+      {/* Land Hills & Ground */}
+      <path
+        d="M -250 40 Q -170 -10 -90 30 Q -10 60 70 40 L 70 150 L -250 150 Z"
+        fill={isPaperMode ? '#FFFFFF' : '#064E3B'}
+        stroke={isPaperMode ? '#000000' : '#059669'}
+        strokeWidth={isPaperMode ? 2 : 2.5}
+      />
+      {/* Subterranean Geological Strata / Bedrock */}
+      <path
+        d="M -250 90 L 70 90 L 70 150 L -250 150 Z"
+        fill={isPaperMode ? '#F1F5F9' : '#1F2937'}
+        stroke={isPaperMode ? '#000000' : '#4B5563'}
+        strokeWidth={isPaperMode ? 1.5 : 2}
+      />
+      {/* Ocean Basin (Right) */}
+      <path
+        d="M 70 40 C 90 40 100 65 120 70 L 250 70 L 250 150 L 70 150 Z"
+        fill={isPaperMode ? '#F8FAFC' : '#0C4A6E'}
+        stroke={isPaperMode ? '#000000' : '#0284C7'}
+        strokeWidth={isPaperMode ? 2 : 2.5}
+      />
+      {/* Ocean Water Surface Waves */}
+      <path d="M 120 70 Q 150 66 180 70 Q 215 74 250 70" stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={2} fill="none" />
+
+      {/* 3. Forest Vegetation (Photosynthesis Sink) */}
+      <g transform="translate(-180, 0)">
+        {/* Tree 1 Trunk & Foliage */}
+        <rect x="-4" y="0" width="8" height="28" fill={isPaperMode ? '#000000' : '#78350F'} />
+        <ellipse cx="0" cy="-10" rx="20" ry="18" fill={isPaperMode ? '#FFFFFF' : '#10B981'} stroke={isPaperMode ? '#000000' : '#34D399'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        {/* Tree 2 */}
+        <g transform="translate(30, 8)">
+          <rect x="-3" y="0" width="6" height="24" fill={isPaperMode ? '#000000' : '#78350F'} />
+          <ellipse cx="0" cy="-8" rx="16" ry="15" fill={isPaperMode ? '#FFFFFF' : '#059669'} stroke={isPaperMode ? '#000000' : '#10B981'} strokeWidth={isPaperMode ? 1.75 : 2} />
+        </g>
+      </g>
+
+      {/* 4. Terrestrial Fauna (Animal Respiration) */}
+      <g transform="translate(-105, 26)">
+        {/* Grazing Herbivore silhouette */}
+        <ellipse cx="0" cy="0" rx="14" ry="9" fill={isPaperMode ? '#000000' : '#D97706'} />
+        <circle cx="12" cy="-6" r="6" fill={isPaperMode ? '#000000' : '#D97706'} />
+        <line x1="-8" y1="8" x2="-8" y2="18" stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="2.5" />
+        <line x1="-3" y1="8" x2="-3" y2="18" stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="2.5" />
+        <line x1="6" y1="8" x2="6" y2="18" stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="2.5" />
+        <line x1="10" y1="8" x2="10" y2="18" stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="2.5" />
+      </g>
+
+      {/* 5. Soil Microbial Decomposition */}
+      <g transform="translate(-130, 68)">
+        <ellipse cx="0" cy="0" rx="22" ry="8" fill={isPaperMode ? '#E2E8F0' : '#374151'} stroke={isPaperMode ? '#000000' : '#9CA3AF'} strokeWidth={1} strokeDasharray="3 2" />
+        <text x="0" y="3" fill={isPaperMode ? '#000000' : '#D1D5DB'} fontSize="8" fontWeight="bold" textAnchor="middle">Decomposers & Soil Microbes</text>
+      </g>
+
+      {/* 6. Subterranean Fossil Fuel Strata (Deep Carbon Sink) */}
+      <g transform="translate(-140, 118)">
+        <rect x="-40" y="-12" width="80" height="24" rx="4" fill={isPaperMode ? '#000000' : '#111827'} stroke={isPaperMode ? '#000000' : '#6B7280'} strokeWidth={1.5} />
+        <text x="0" y="4" fill="#FFFFFF" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">FOSSIL FUELS (Coal/Oil/Gas)</text>
+      </g>
+
+      {/* 7. Industrial Factory & Emissions (Combustion Source) */}
+      <g transform="translate(10, 18)">
+        {/* Factory building */}
+        <polygon points="-25,25 -25,-2 -8,-2 -8,6 10,-2 10,6 28,-2 28,25" fill={isPaperMode ? '#FFFFFF' : '#475569'} stroke={isPaperMode ? '#000000' : '#94A3B8'} strokeWidth={isPaperMode ? 2 : 2} />
+        {/* Smoke stacks */}
+        <rect x="-22" y="-16" width="6" height="14" fill={isPaperMode ? '#000000' : '#64748B'} />
+        <rect x="-12" y="-20" width="7" height="18" fill={isPaperMode ? '#000000' : '#64748B'} />
+        {/* Smoke plumes */}
+        <circle cx="-18" cy="-24" r="5" fill={isPaperMode ? '#CBD5E1' : '#94A3B8'} opacity="0.8" />
+        <circle cx="-14" cy="-32" r="7" fill={isPaperMode ? '#CBD5E1' : '#CBD5E1'} opacity="0.7" />
+        <circle cx="-8" cy="-42" r="9" fill={isPaperMode ? '#E2E8F0' : '#E2E8F0'} opacity="0.6" />
+      </g>
+
+      {/* 8. Oceanic Marine Carbon & Carbonate Sedimentation */}
+      <g transform="translate(180, 105)">
+        {/* Marine Phytoplankton */}
+        <circle cx="-25" cy="-15" r="4" fill={isPaperMode ? '#000000' : '#10B981'} />
+        <circle cx="-15" cy="-20" r="3" fill={isPaperMode ? '#000000' : '#10B981'} />
+        {/* Marine Organism (Fish) */}
+        <polygon points="10,-10 25,-16 25,-4" fill={isPaperMode ? '#000000' : '#38BDF8'} />
+        <circle cx="5" cy="-10" r="7" fill={isPaperMode ? '#000000' : '#38BDF8'} />
+        {/* Carbonate / Limestone Sediment on Seafloor */}
+        <rect x="-45" y="25" width="90" height="14" rx="3" fill={isPaperMode ? '#E2E8F0' : '#0369A1'} stroke={isPaperMode ? '#000000' : '#7DD3FC'} strokeWidth={1} />
+        <text x="0" y="35" fill={isPaperMode ? '#000000' : '#E0F2FE'} fontSize="8" fontWeight="bold" textAnchor="middle">CaCO₃ Limestone Sediments</text>
+      </g>
+
+      {/* 9. Biogeochemical Flow Arrows (Photosynthesis, Respiration, Combustion, Ocean Uptake) */}
+      {/* Downward Photosynthesis Arrow */}
+      <g transform="translate(-160, -45)">
+        <path d="M 0 -20 L 0 15" stroke={isPaperMode ? '#000000' : '#10B981'} strokeWidth={isPaperMode ? 3 : 3.5} strokeLinecap="round" />
+        <polygon points="0,22 -6,12 6,12" fill={isPaperMode ? '#000000' : '#10B981'} />
+        <text x="-12" y="2" fill={isPaperMode ? '#000000' : '#10B981'} fontSize="9" fontWeight="bold" textAnchor="end">Photosynthesis (-120 Gt/yr)</text>
+      </g>
+
+      {/* Upward Respiration Arrow */}
+      <g transform="translate(-95, -35)">
+        <path d="M 0 20 L 0 -15" stroke={isPaperMode ? '#000000' : '#F59E0B'} strokeWidth={isPaperMode ? 2.5 : 3} strokeLinecap="round" />
+        <polygon points="0,-22 -5,-12 5,-12" fill={isPaperMode ? '#000000' : '#F59E0B'} />
+        <text x="10" y="2" fill={isPaperMode ? '#000000' : '#F59E0B'} fontSize="8.5" fontWeight="bold">Respiration (+118 Gt/yr)</text>
+      </g>
+
+      {/* Upward Industrial Combustion Arrow */}
+      <g transform="translate(0, -45)">
+        <path d="M 0 18 L 0 -18" stroke={isPaperMode ? '#000000' : '#EF4444'} strokeWidth={isPaperMode ? 3 : 3.5} strokeLinecap="round" />
+        <polygon points="0,-24 -6,-14 6,-14" fill={isPaperMode ? '#000000' : '#EF4444'} />
+        <text x="10" y="-2" fill={isPaperMode ? '#000000' : '#EF4444'} fontSize="9" fontWeight="bold">Combustion (+10 Gt/yr)</text>
+      </g>
+
+      {/* Bilateral Oceanic Gas Exchange */}
+      <g transform="translate(160, -25)">
+        <path d="M -12 25 L -12 -10" stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={2} />
+        <polygon points="-12,-15 -16,-7 -8,-7" fill={isPaperMode ? '#000000' : '#38BDF8'} />
+        <path d="M 12 -10 L 12 25" stroke={isPaperMode ? '#000000' : '#0284C7'} strokeWidth={2} />
+        <polygon points="12,30 8,22 16,22" fill={isPaperMode ? '#000000' : '#0284C7'} />
+        <text x="0" y="6" fill={isPaperMode ? '#000000' : '#7DD3FC'} fontSize="8.5" fontWeight="bold" textAnchor="middle">Air-Sea Gas Exchange</text>
+      </g>
+    </g>
+  );
+};
+
+/**
+ * 26. High-Resolution Biogeochemical Nitrogen Cycle Diagram
+ * - Atmospheric N₂ Pool (78% of air)
+ * - Biological Nitrogen Fixation (Rhizobium in legume root nodules & Azotobacter)
+ * - Industrial / Lightning Nitrogen Fixation
+ * - Ammonification (Saprophytic decomposers breaking organic matter into NH₄⁺)
+ * - Nitrification step 1: Nitrosomonas converting NH₄⁺ into Nitrites (NO₂⁻)
+ * - Nitrification step 2: Nitrobacter converting NO₂⁻ into Nitrates (NO₃⁻)
+ * - Plant Root Assimilation of Nitrates
+ * - Denitrification (Pseudomonas returning N₂ gas to atmosphere under anaerobic conditions)
+ */
+export const NitrogenCycleDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
+  return (
+    <g id="nitrogen-cycle-diagram-group" transform="translate(0, 0)">
+      {/* Sky & Atmospheric N2 Reservoir */}
+      <rect x="-240" y="-140" width="480" height="70" rx="6" fill={isPaperMode ? '#FFFFFF' : '#0F172A'} stroke={isPaperMode ? '#CBD5E1' : '#1E293B'} strokeWidth={1} />
+      <g transform="translate(0, -105)">
+        <rect x="-130" y="-20" width="260" height="40" rx="8" fill={isPaperMode ? '#F8FAFC' : '#1E293B'} stroke={isPaperMode ? '#000000' : '#818CF8'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        <text x="0" y="-2" fill={isPaperMode ? '#000000' : '#818CF8'} fontSize="13" fontWeight="bold" textAnchor="middle">ATMOSPHERIC NITROGEN (N₂) POOL</text>
+        <text x="0" y="13" fill={isPaperMode ? '#475569' : '#C7D2FE'} fontSize="9.5" textAnchor="middle">78% Atmospheric Volume • Inert Triple Covalent Bond (N≡N)</text>
+      </g>
+
+      {/* Soil Horizon & Subsurface Profile */}
+      <path d="M -240 -10 L 240 -10 L 240 145 L -240 145 Z" fill={isPaperMode ? '#F8FAFC' : '#1C1917'} stroke={isPaperMode ? '#000000' : '#44403C'} strokeWidth={isPaperMode ? 2 : 2} />
+
+      {/* Legume Plant with Root Nodules (Nitrogen Fixation) */}
+      <g transform="translate(-160, -10)">
+        {/* Plant Shoots & Leaves */}
+        <line x1="0" y1="0" x2="0" y2="-45" stroke={isPaperMode ? '#000000' : '#10B981'} strokeWidth="3.5" />
+        <ellipse cx="-12" cy="-35" rx="12" ry="7" fill={isPaperMode ? '#FFFFFF' : '#34D399'} stroke={isPaperMode ? '#000000' : '#059669'} strokeWidth="1.5" />
+        <ellipse cx="12" cy="-40" rx="12" ry="7" fill={isPaperMode ? '#FFFFFF' : '#34D399'} stroke={isPaperMode ? '#000000' : '#059669'} strokeWidth="1.5" />
+        {/* Root System */}
+        <path d="M 0 0 Q -15 35 -30 65 M 0 0 Q 15 35 25 70 M 0 0 L 0 85 M -15 35 L -35 45 M 15 35 L 35 50" stroke={isPaperMode ? '#000000' : '#D97706'} strokeWidth="2" fill="none" />
+        {/* Rhizobium Root Nodules */}
+        <circle cx="-15" cy="35" r="5" fill={isPaperMode ? '#CBD5E1' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="1.5" />
+        <circle cx="-25" cy="55" r="4.5" fill={isPaperMode ? '#CBD5E1' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="1.5" />
+        <circle cx="15" cy="40" r="5" fill={isPaperMode ? '#CBD5E1' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="1.5" />
+        <circle cx="22" cy="60" r="4" fill={isPaperMode ? '#CBD5E1' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#B45309'} strokeWidth="1.5" />
+      </g>
+
+      {/* Decomposers & Ammonification Node */}
+      <g transform="translate(-60, 45)">
+        <rect x="-45" y="-18" width="90" height="36" rx="6" fill={isPaperMode ? '#FFFFFF' : '#292524'} stroke={isPaperMode ? '#000000' : '#A8A29E'} strokeWidth="1.5" />
+        <text x="0" y="-3" fill={isPaperMode ? '#000000' : '#E7E5E4'} fontSize="9" fontWeight="bold" textAnchor="middle">Decomposition</text>
+        <text x="0" y="11" fill={isPaperMode ? '#000000' : '#FBBF24'} fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NH₄⁺ (Ammonium)</text>
+      </g>
+
+      {/* Nitrification: Nitrites (NO2-) Node */}
+      <g transform="translate(60, 45)">
+        <rect x="-45" y="-18" width="90" height="36" rx="6" fill={isPaperMode ? '#FFFFFF' : '#1E1B4B'} stroke={isPaperMode ? '#000000' : '#818CF8'} strokeWidth="1.5" />
+        <text x="0" y="-3" fill={isPaperMode ? '#000000' : '#C7D2FE'} fontSize="8.5" fontWeight="bold" textAnchor="middle">Nitrosomonas</text>
+        <text x="0" y="11" fill={isPaperMode ? '#000000' : '#A5B4FC'} fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NO₂⁻ (Nitrites)</text>
+      </g>
+
+      {/* Nitrification: Nitrates (NO3-) Node (Assimilation & Denitrification hub) */}
+      <g transform="translate(60, 110)">
+        <rect x="-45" y="-18" width="90" height="36" rx="6" fill={isPaperMode ? '#FFFFFF' : '#064E3B'} stroke={isPaperMode ? '#000000' : '#34D399'} strokeWidth="1.5" />
+        <text x="0" y="-3" fill={isPaperMode ? '#000000' : '#A7F3D0'} fontSize="8.5" fontWeight="bold" textAnchor="middle">Nitrobacter</text>
+        <text x="0" y="11" fill={isPaperMode ? '#000000' : '#6EE7B7'} fontSize="11" fontWeight="bold" fontFamily="monospace" textAnchor="middle">NO₃⁻ (Nitrates)</text>
+      </g>
+
+      {/* Denitrification Arrow returning to Atmosphere (Right side) */}
+      <g transform="translate(170, 40)">
+        <path d="M 0 60 L 0 -95" stroke={isPaperMode ? '#000000' : '#F43F5E'} strokeWidth={isPaperMode ? 2.5 : 3} strokeDasharray="5 3" />
+        <polygon points="0,-102 -5,-92 5,-92" fill={isPaperMode ? '#000000' : '#F43F5E'} />
+        <text x="12" y="-15" fill={isPaperMode ? '#000000' : '#FB7185'} fontSize="9" fontWeight="bold">Denitrification</text>
+        <text x="12" y="-2" fill={isPaperMode ? '#475569' : '#FDA4AF'} fontSize="8">(Pseudomonas)</text>
+      </g>
+
+      {/* Nitrogen Fixation Downward Flow (Left side) */}
+      <g transform="translate(-200, -40)">
+        <path d="M 40 -30 L 0 25" stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={isPaperMode ? 2.5 : 3} />
+        <polygon points="0,32 -8,22 2,20" fill={isPaperMode ? '#000000' : '#38BDF8'} />
+        <text x="-10" y="-5" fill={isPaperMode ? '#000000' : '#38BDF8'} fontSize="9" fontWeight="bold" textAnchor="end">N₂ Fixation</text>
+      </g>
+
+      {/* Conversion Arrows */}
+      <line x1="-15" y1="45" x2="15" y2="45" stroke={isPaperMode ? '#000000' : '#CBD5E1'} strokeWidth="2.5" markerEnd="url(#arrow)" />
+      <line x1="60" y1="63" x2="60" y2="92" stroke={isPaperMode ? '#000000' : '#CBD5E1'} strokeWidth="2.5" />
+    </g>
+  );
+};
+
+/**
+ * 27. High-Resolution Male Reproductive System Diagram (Sagittal & Coronal Cross-Section)
+ * Textbook-accurate representation based on Gray's Anatomy:
+ * - Testis with Seminiferous Tubules & Tunica Albuginea
+ * - Epididymis (Head, Body, Tail)
+ * - Vas Deferens / Ductus Deferens
+ * - Seminal Vesicle
+ * - Prostate Gland & Prostatic Urethra
+ * - Bulbourethral (Cowper's) Gland
+ * - Urinary Bladder
+ * - Corpus Cavernosum & Corpus Spongiosum
+ * - Glans Penis & Urethral Meatus
+ * - Scrotum & Spermatic Cord
+ */
+export const MaleReproductiveSystemDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
+  return (
+    <g id="male-reproductive-diagram-group" transform="translate(-10, 0)">
+      {/* 1. Urinary Bladder (Anterosuperior) */}
+      <g transform="translate(0, -60)">
+        <path
+          d="M -35 -20 C -20 -45 20 -45 35 -20 C 45 10 30 30 0 35 C -30 30 -45 10 -35 -20 Z"
+          fill={isPaperMode ? '#FFFFFF' : '#F59E0B'}
+          fillOpacity={isPaperMode ? 1 : 0.85}
+          stroke={isPaperMode ? '#000000' : '#D97706'}
+          strokeWidth={isPaperMode ? 2 : 2.5}
+        />
+        <text x="0" y="5" fill={isPaperMode ? '#000000' : '#78350F'} fontSize="9" fontWeight="bold" textAnchor="middle">Urinary Bladder</text>
+      </g>
+
+      {/* 2. Prostate Gland (Surrounding Prostatic Urethra directly below bladder) */}
+      <g transform="translate(0, -10)">
+        <ellipse cx="0" cy="0" rx="28" ry="18" fill={isPaperMode ? '#E2E8F0' : '#8B5CF6'} stroke={isPaperMode ? '#000000' : '#A78BFA'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        <line x1="0" y1="-18" x2="0" y2="18" stroke={isPaperMode ? '#000000' : '#EDE9FE'} strokeWidth={3} />
+      </g>
+
+      {/* 3. Seminal Vesicles (Posterosuperior to prostate) */}
+      <g transform="translate(32, -35)">
+        <path d="M 0 0 C 15 -10 28 5 22 20 C 18 30 5 25 0 15 Z" fill={isPaperMode ? '#FFFFFF' : '#EC4899'} stroke={isPaperMode ? '#000000' : '#F472B6'} strokeWidth={isPaperMode ? 1.75 : 2} />
+        <path d="M 6 4 Q 14 10 12 18" stroke={isPaperMode ? '#000000' : '#FBCFE8'} strokeWidth={1.5} fill="none" />
+      </g>
+
+      {/* 4. Bulbourethral (Cowper's) Gland */}
+      <g transform="translate(15, 18)">
+        <circle cx="0" cy="0" r="5.5" fill={isPaperMode ? '#CBD5E1' : '#06B6D4'} stroke={isPaperMode ? '#000000' : '#22D3EE'} strokeWidth={1.5} />
+      </g>
+
+      {/* 5. Vas Deferens (Long sweeping duct looping around bladder into prostate) */}
+      <path
+        d="M -115 110 C -125 50 -105 -20 -70 -65 C -45 -95 10 -95 35 -60 C 45 -40 38 -20 15 -10"
+        stroke={isPaperMode ? '#000000' : '#3B82F6'}
+        strokeWidth={isPaperMode ? 3.5 : 4}
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* 6. Scrotum & Testis */}
+      <g transform="translate(-120, 115)">
+        {/* Scrotal sac */}
+        <ellipse cx="0" cy="5" rx="34" ry="40" fill={isPaperMode ? '#F8FAFC' : '#334155'} stroke={isPaperMode ? '#000000' : '#64748B'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        {/* Testis (with seminiferous tubules) */}
+        <ellipse cx="2" cy="5" rx="22" ry="28" fill={isPaperMode ? '#FFFFFF' : '#0284C7'} stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={isPaperMode ? 2 : 2.5} />
+        {/* Coiled seminiferous tubule striations */}
+        <path d="M -8 -10 Q 2 -15 8 -8 Q 12 0 4 8 Q -6 15 2 20" stroke={isPaperMode ? '#000000' : '#E0F2FE'} strokeWidth={1.5} fill="none" />
+        {/* Epididymis (Crescent structure capping the testis) */}
+        <path
+          d="M -16 -18 C -5 -32 20 -28 22 -10 C 24 10 20 28 8 34"
+          fill="none"
+          stroke={isPaperMode ? '#000000' : '#10B981'}
+          strokeWidth={isPaperMode ? 5.5 : 6.5}
+          strokeLinecap="round"
+        />
+      </g>
+
+      {/* 7. Penis (Shaft, Erectile Tissues & Glans) */}
+      <g transform="translate(0, 30)">
+        {/* Shaft / Corpora Cavernosa & Spongiosum */}
+        <path
+          d="M -15 0 L -18 90 C -18 105 18 105 18 90 L 15 0 Z"
+          fill={isPaperMode ? '#FFFFFF' : '#BE185D'}
+          stroke={isPaperMode ? '#000000' : '#E11D48'}
+          strokeWidth={isPaperMode ? 2 : 2.5}
+        />
+        {/* Spongy Urethra running down the center */}
+        <line x1="0" y1="0" x2="0" y2="92" stroke={isPaperMode ? '#000000' : '#FCE7F3'} strokeWidth={2.5} />
+        {/* Glans Penis (Acorn-shaped head) */}
+        <path
+          d="M -22 90 C -22 118 0 130 0 130 C 0 130 22 118 22 90 Z"
+          fill={isPaperMode ? '#E2E8F0' : '#F43F5E'}
+          stroke={isPaperMode ? '#000000' : '#FDA4AF'}
+          strokeWidth={isPaperMode ? 2 : 2.5}
+        />
+        {/* External Urethral Orifice (Meatus) */}
+        <line x1="0" y1="120" x2="0" y2="128" stroke={isPaperMode ? '#000000' : '#FFFFFF'} strokeWidth={2} />
+      </g>
+    </g>
+  );
+};
+
+/**
+ * 28. High-Resolution Hydrological / Water Cycle Diagram
+ * - Solar Radiation driving evaporation
+ * - Ocean & Lake Evaporation
+ * - Plant Evapotranspiration
+ * - Cloud Condensation
+ * - Precipitation (Rain & Snow over mountains)
+ * - Surface Runoff & Infiltration / Groundwater Table
+ */
+export const WaterCycleDiagram: React.FC<DiagramProps> = ({ isPaperMode }) => {
+  return (
+    <g id="water-cycle-diagram-group" transform="translate(0, 0)">
+      {/* Sun (Upper Left Energy Driver) */}
+      <g transform="translate(-180, -100)">
+        <circle cx="0" cy="0" r="22" fill={isPaperMode ? '#FFFFFF' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#FBBF24'} strokeWidth={isPaperMode ? 2 : 3} />
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((ang, i) => (
+          <line
+            key={`sun-ray-${i}`}
+            x1={Math.cos((ang * Math.PI) / 180) * 28}
+            y1={Math.sin((ang * Math.PI) / 180) * 28}
+            x2={Math.cos((ang * Math.PI) / 180) * 38}
+            y2={Math.sin((ang * Math.PI) / 180) * 38}
+            stroke={isPaperMode ? '#000000' : '#F59E0B'}
+            strokeWidth={2}
+          />
+        ))}
+      </g>
+
+      {/* Condensation Clouds (Upper Center & Right) */}
+      <g transform="translate(0, -95)">
+        <path
+          d="M -40 10 C -55 10 -60 -5 -45 -15 C -45 -30 -20 -35 -5 -25 C 10 -35 35 -30 35 -15 C 50 -5 45 10 30 10 Z"
+          fill={isPaperMode ? '#FFFFFF' : '#CBD5E1'}
+          stroke={isPaperMode ? '#000000' : '#94A3B8'}
+          strokeWidth={isPaperMode ? 2 : 2.5}
+        />
+        <text x="-5" y="-5" fill={isPaperMode ? '#000000' : '#334155'} fontSize="9" fontWeight="bold" textAnchor="middle">Condensation</text>
+      </g>
+
+      {/* Mountain & Land Terrain */}
+      <polygon points="-50,-10 60,140 -240,140" fill={isPaperMode ? '#F1F5F9' : '#374151'} stroke={isPaperMode ? '#000000' : '#6B7280'} strokeWidth={isPaperMode ? 2 : 2} />
+      {/* Snow cap */}
+      <polygon points="-50,-10 -25,25 -45,35 -65,20" fill={isPaperMode ? '#FFFFFF' : '#F8FAFC'} stroke={isPaperMode ? '#000000' : '#E2E8F0'} strokeWidth={1.5} />
+
+      {/* Precipitation Rain drops */}
+      <g transform="translate(20, -50)">
+        {[0, 15, 30, -15].map((x, i) => (
+          <line key={`rain-${i}`} x1={x} y1={0} x2={x - 8} y2={22} stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={2} strokeDasharray="3 3" />
+        ))}
+        <text x="5" y="40" fill={isPaperMode ? '#000000' : '#38BDF8'} fontSize="9" fontWeight="bold">Precipitation</text>
+      </g>
+
+      {/* Ocean Reservoir (Right) */}
+      <path d="M 60 70 C 90 70 120 75 240 75 L 240 140 L 60 140 Z" fill={isPaperMode ? '#FFFFFF' : '#0284C7'} stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={isPaperMode ? 2 : 2.5} />
+
+      {/* Evaporation Waves & Arrows */}
+      <g transform="translate(160, 45)">
+        <path d="M -15 15 Q -5 0 -15 -15" stroke={isPaperMode ? '#000000' : '#60A5FA'} strokeWidth={2.5} fill="none" />
+        <polygon points="-15,-20 -20,-10 -10,-10" fill={isPaperMode ? '#000000' : '#60A5FA'} />
+        <path d="M 15 15 Q 25 0 15 -15" stroke={isPaperMode ? '#000000' : '#60A5FA'} strokeWidth={2.5} fill="none" />
+        <polygon points="15,-20 10,-10 20,-10" fill={isPaperMode ? '#000000' : '#60A5FA'} />
+        <text x="0" y="2" fill={isPaperMode ? '#000000' : '#DBEAFE'} fontSize="9" fontWeight="bold" textAnchor="middle">Evaporation</text>
+      </g>
+
+      {/* Transpiration from Vegetation */}
+      <g transform="translate(-110, 60)">
+        <ellipse cx="0" cy="0" rx="16" ry="14" fill={isPaperMode ? '#FFFFFF' : '#10B981'} stroke={isPaperMode ? '#000000' : '#059669'} strokeWidth={1.5} />
+        <path d="M 0 -15 Q 8 -28 0 -40" stroke={isPaperMode ? '#000000' : '#34D399'} strokeWidth={2} fill="none" />
+        <polygon points="0,-45 -4,-37 4,-37" fill={isPaperMode ? '#000000' : '#34D399'} />
+        <text x="18" y="-25" fill={isPaperMode ? '#000000' : '#34D399'} fontSize="8" fontWeight="bold">Transpiration</text>
+      </g>
+
+      {/* Runoff & Infiltration */}
+      <path d="M -10 50 Q 40 85 80 85" stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={3} fill="none" />
+      <text x="35" y="105" fill={isPaperMode ? '#000000' : '#93C5FD'} fontSize="8.5" fontWeight="bold">Runoff & Infiltration</text>
+    </g>
+  );
+};
+
+/**
+ * 29. High-Resolution Electric Circuit Diagram
+ * Modeled on standard physics and electrical engineering schematics:
+ * - DC Chemical Cell / Battery Voltage Source (Long positive, short thick negative)
+ * - Single-Pole Knife Switch (Contact terminals and hinged arm)
+ * - Fixed Linear Resistor (With color bands or zig-zag / IEC standard rectangular body)
+ * - Series DC Ammeter (Galvanometer dial needle and "A" symbol)
+ * - Parallel High-Impedance DC Voltmeter ("V" symbol across load)
+ * - Incandescent Light Bulb (Filament loop inside glass bulb)
+ * - Conventional Current arrows (Positive to Negative) and Electron Drift markers
+ */
+export const ElectricCircuitDiagram: React.FC<DiagramProps> = ({ isPaperMode, renderMode = '3d' }) => {
+  const isColor = !isPaperMode;
+  const wireColor = isPaperMode ? '#000000' : '#38BDF8';
+  const componentBg = isPaperMode ? '#FFFFFF' : '#0F172A';
+  const accentColor = isPaperMode ? '#0F172A' : '#F59E0B';
+
+  return (
+    <g id="electric-circuit-group" transform="translate(0, 0)">
+      {/* 1. Main Circuit Loop Wires */}
+      {/* Top Wire */}
+      <line x1="-180" y1="-90" x2="180" y2="-90" stroke={wireColor} strokeWidth={isPaperMode ? 3 : 3.5} strokeLinecap="round" />
+      {/* Right Wire */}
+      <line x1="180" y1="-90" x2="180" y2="90" stroke={wireColor} strokeWidth={isPaperMode ? 3 : 3.5} strokeLinecap="round" />
+      {/* Bottom Wire */}
+      <line x1="180" y1="90" x2="-180" y2="90" stroke={wireColor} strokeWidth={isPaperMode ? 3 : 3.5} strokeLinecap="round" />
+      {/* Left Wire */}
+      <line x1="-180" y1="90" x2="-180" y2="-90" stroke={wireColor} strokeWidth={isPaperMode ? 3 : 3.5} strokeLinecap="round" />
+
+      {/* 2. DC Voltage Cell / Battery (Left Vertical Branch) */}
+      <g id="circuit-battery" transform="translate(-180, 0)">
+        <rect x="-24" y="-35" width="48" height="70" fill={componentBg} stroke="none" />
+        {/* Long Positive Plate (+) */}
+        <line x1="-20" y1="-20" x2="20" y2="-20" stroke={isPaperMode ? '#000000' : '#EF4444'} strokeWidth={isPaperMode ? 3.5 : 4.5} strokeLinecap="round" />
+        {/* Short Thick Negative Plate (-) */}
+        <line x1="-10" y1="-10" x2="10" y2="-10" stroke={isPaperMode ? '#000000' : '#3B82F6'} strokeWidth={isPaperMode ? 6 : 7} strokeLinecap="round" />
+        {/* Second Cell (Battery Pair) */}
+        <line x1="-20" y1="10" x2="20" y2="10" stroke={isPaperMode ? '#000000' : '#EF4444'} strokeWidth={isPaperMode ? 3.5 : 4.5} strokeLinecap="round" />
+        <line x1="-10" y1="20" x2="10" y2="20" stroke={isPaperMode ? '#000000' : '#3B82F6'} strokeWidth={isPaperMode ? 6 : 7} strokeLinecap="round" />
+        {/* Terminals Connecting Wires */}
+        <line x1="0" y1="-35" x2="0" y2="-20" stroke={wireColor} strokeWidth={3} />
+        <line x1="0" y1="20" x2="0" y2="35" stroke={wireColor} strokeWidth={3} />
+        {/* Polarity Symbols */}
+        <text x="26" y="-16" fill={isPaperMode ? '#000000' : '#EF4444'} fontSize="14" fontWeight="bold" fontFamily="monospace">+</text>
+        <text x="26" y="24" fill={isPaperMode ? '#000000' : '#3B82F6'} fontSize="16" fontWeight="bold" fontFamily="monospace">-</text>
+        <text x="-48" y="5" fill={isPaperMode ? '#334155' : '#94A3B8'} fontSize="10" fontWeight="bold" textAnchor="middle">Battery (12V)</text>
+      </g>
+
+      {/* 3. Switch / Key (Top Horizontal Branch - Left) */}
+      <g id="circuit-switch" transform="translate(-70, -90)">
+        <rect x="-35" y="-18" width="70" height="36" fill={componentBg} stroke="none" />
+        {/* Terminal Contacts */}
+        <circle cx="-20" cy="0" r="4.5" fill={isPaperMode ? '#000000' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#FEF3C7'} strokeWidth={1.5} />
+        <circle cx="20" cy="0" r="4.5" fill={isPaperMode ? '#000000' : '#F59E0B'} stroke={isPaperMode ? '#000000' : '#FEF3C7'} strokeWidth={1.5} />
+        {/* Switch Lever (Closed/Active position with slight angle for realism) */}
+        <line x1="-18" y1="-2" x2="18" y2="-12" stroke={isPaperMode ? '#000000' : '#10B981'} strokeWidth={3.5} strokeLinecap="round" />
+        <text x="0" y="-22" fill={isPaperMode ? '#000000' : '#34D399'} fontSize="10" fontWeight="bold" textAnchor="middle">Switch (Closed)</text>
+      </g>
+
+      {/* 4. Series DC Ammeter (Top Horizontal Branch - Right) */}
+      <g id="circuit-ammeter" transform="translate(65, -90)">
+        <rect x="-25" y="-25" width="50" height="50" fill={componentBg} stroke="none" />
+        <circle cx="0" cy="0" r="20" fill={isPaperMode ? '#FFFFFF' : '#1E293B'} stroke={isPaperMode ? '#000000' : '#38BDF8'} strokeWidth={2.5} />
+        <text x="0" y="7" fill={isPaperMode ? '#000000' : '#38BDF8'} fontSize="18" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">A</text>
+        <text x="0" y="-28" fill={isPaperMode ? '#334155' : '#94A3B8'} fontSize="9.5" fontWeight="bold" textAnchor="middle">Ammeter (Series)</text>
+      </g>
+
+      {/* 5. Fixed Resistor (Right Vertical Branch) */}
+      <g id="circuit-resistor" transform="translate(180, 0)">
+        <rect x="-24" y="-35" width="48" height="70" fill={componentBg} stroke="none" />
+        {/* Resistor Rectangular Body (IEC Standard) */}
+        <rect x="-14" y="-28" width="28" height="56" rx="3" fill={isPaperMode ? '#FFFFFF' : '#334155'} stroke={isPaperMode ? '#000000' : '#F59E0B'} strokeWidth={2.5} />
+        {/* Color Bands (Brown, Black, Red, Gold = 1 kΩ) */}
+        {isColor && (
+          <g>
+            <rect x="-14" y="-20" width="28" height="4" fill="#92400E" />
+            <rect x="-14" y="-10" width="28" height="4" fill="#000000" />
+            <rect x="-14" y="0" width="28" height="4" fill="#EF4444" />
+            <rect x="-14" y="14" width="28" height="4" fill="#FBBF24" />
+          </g>
+        )}
+        <text x="44" y="5" fill={isPaperMode ? '#000000' : '#FBBF24'} fontSize="10" fontWeight="bold" textAnchor="start">Resistor (R = 100 Ω)</text>
+      </g>
+
+      {/* 6. Parallel High-Impedance Voltmeter across Resistor */}
+      <g id="circuit-voltmeter" transform="translate(180, 0)">
+        {/* Voltmeter jumper wires connected in parallel */}
+        <path d="M 0 -45 L 80 -45 L 80 -25" fill="none" stroke={wireColor} strokeWidth={2} strokeDasharray={isPaperMode ? '4 2' : undefined} />
+        <path d="M 0 45 L 80 45 L 80 25" fill="none" stroke={wireColor} strokeWidth={2} strokeDasharray={isPaperMode ? '4 2' : undefined} />
+        {/* Tap Node Dots */}
+        <circle cx="0" cy="-45" r="3.5" fill={isPaperMode ? '#000000' : '#38BDF8'} />
+        <circle cx="0" cy="45" r="3.5" fill={isPaperMode ? '#000000' : '#38BDF8'} />
+        {/* Voltmeter Meter Dial */}
+        <g transform="translate(80, 0)">
+          <circle cx="0" cy="0" r="18" fill={isPaperMode ? '#FFFFFF' : '#1E293B'} stroke={isPaperMode ? '#000000' : '#A855F7'} strokeWidth={2.5} />
+          <text x="0" y="6" fill={isPaperMode ? '#000000' : '#C084FC'} fontSize="16" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">V</text>
+          <text x="24" y="4" fill={isPaperMode ? '#334155' : '#C084FC'} fontSize="9" fontWeight="bold" textAnchor="start">Voltmeter (Parallel)</text>
+        </g>
+      </g>
+
+      {/* 7. Incandescent Lamp / Light Bulb (Bottom Horizontal Branch) */}
+      <g id="circuit-lamp" transform="translate(0, 90)">
+        <rect x="-30" y="-28" width="60" height="56" fill={componentBg} stroke="none" />
+        {/* Bulb Glass Circle */}
+        <circle cx="0" cy="0" r="22" fill={isPaperMode ? '#FFFFFF' : '#FEF3C7'} fillOpacity={isPaperMode ? 1 : 0.25} stroke={isPaperMode ? '#000000' : '#F59E0B'} strokeWidth={2.5} />
+        {/* Internal Cross / Filament Symbol (IEC/IEEE) */}
+        <line x1="-12" y1="-12" x2="12" y2="12" stroke={isPaperMode ? '#000000' : '#F59E0B'} strokeWidth={2.5} strokeLinecap="round" />
+        <line x1="12" y1="-12" x2="-12" y2="12" stroke={isPaperMode ? '#000000' : '#F59E0B'} strokeWidth={2.5} strokeLinecap="round" />
+        {/* Glowing Halo in Color Mode */}
+        {isColor && (
+          <circle cx="0" cy="0" r="28" fill="none" stroke="#FDE68A" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.8" />
+        )}
+        <text x="0" y="38" fill={isPaperMode ? '#000000' : '#FBBF24'} fontSize="10" fontWeight="bold" textAnchor="middle">Load: Incandescent Lamp</text>
+      </g>
+
+      {/* 8. Direction of Conventional Current vs Electron Flow */}
+      <g id="circuit-current-vectors">
+        {/* Top Wire Conventional Current (Left to Right: + to -) */}
+        <g transform="translate(-130, -90)">
+          <polygon points="10,-6 18,0 10,6" fill={isPaperMode ? '#000000' : '#EF4444'} />
+          <text x="0" y="-10" fill={isPaperMode ? '#000000' : '#EF4444'} fontSize="8.5" fontWeight="bold">I (Current: + → -)</text>
+        </g>
+        {/* Bottom Wire Conventional Current (Right to Left) */}
+        <g transform="translate(-100, 90)">
+          <polygon points="-10,-6 -18,0 -10,6" fill={isPaperMode ? '#000000' : '#EF4444'} />
+        </g>
+        {/* Electron Flow Annotation */}
+        <g transform="translate(0, -108)">
+          <text x="0" y="0" fill={isPaperMode ? '#475569' : '#38BDF8'} fontSize="8" fontFamily="monospace" textAnchor="middle">
+            e⁻ Electron Drift (Negative Terminal → Positive Terminal)
+          </text>
+        </g>
+      </g>
+    </g>
+  );
+};
+
+/**
+ * 30. High-Resolution Electromagnetic Spectrum Diagram
+ * Modeled on standard physics and optics reference charts:
+ * - Radio Waves (Long wavelength, low frequency, e.g. AM/FM, TV)
+ * - Microwaves (Radar, Satellite, WiFi)
+ * - Infrared Radiation (Thermal imaging, heat lamps)
+ * - Visible Light Spectrum (Expanded ROYGBIV Rainbow prism 400nm - 700nm)
+ * - Ultraviolet Radiation (Sunlight UV-A, UV-B, UV-C)
+ * - X-Rays (Diagnostic medical radiography)
+ * - Gamma Rays (High-energy nuclear decay, cosmic rays)
+ * - Continuous sinusoidal wave displaying wave compression from long λ to short λ
+ * - Quantitative frequency (Hz), wavelength (m), and photon energy (eV) scales
+ */
+export const ElectromagneticSpectrumDiagram: React.FC<DiagramProps> = ({ isPaperMode, renderMode = '3d' }) => {
+  const isColor = !isPaperMode;
+
+  const bands = [
+    { name: 'Radio Waves', lambda: '10³ m', freq: '10⁴ Hz', energy: '10⁻¹⁰ eV', x: -185, w: 62, color: '#3B82F6', icon: '📡' },
+    { name: 'Microwaves', lambda: '10⁻² m', freq: '10⁸ Hz', energy: '10⁻⁶ eV', x: -123, w: 60, color: '#06B6D4', icon: '📶' },
+    { name: 'Infrared (IR)', lambda: '10⁻⁵ m', freq: '10¹² Hz', energy: '10⁻² eV', x: -63, w: 60, color: '#10B981', icon: '🔥' },
+    { name: 'Visible Light', lambda: '0.5 µm', freq: '10¹⁵ Hz', energy: '2 eV', x: -3, w: 66, color: '#F59E0B', icon: '🌈' },
+    { name: 'Ultraviolet', lambda: '10⁻⁸ m', freq: '10¹⁶ Hz', energy: '10² eV', x: 63, w: 60, color: '#8B5CF6', icon: '☀️' },
+    { name: 'X-Rays', lambda: '10⁻¹⁰ m', freq: '10¹⁸ Hz', energy: '10⁴ eV', x: 123, w: 60, color: '#EC4899', icon: '🩻' },
+    { name: 'Gamma Rays', lambda: '10⁻¹² m', freq: '10²⁰ Hz', energy: '10⁶ eV', x: 183, w: 60, color: '#EF4444', icon: '☢️' }
+  ];
+
+  return (
+    <g id="em-spectrum-group" transform="translate(0, 0)">
+      {/* 1. Header Gradient Bands Container */}
+      <g id="spectrum-bands" transform="translate(0, -75)">
+        <rect x="-220" y="-30" width="440" height="60" rx="6" fill={isPaperMode ? '#FFFFFF' : '#0F172A'} stroke={isPaperMode ? '#000000' : '#334155'} strokeWidth={2} />
+
+        {bands.map((b, i) => (
+          <g key={`band-${i}`} transform={`translate(${b.x}, 0)`}>
+            <rect
+              x={-b.w / 2}
+              y="-28"
+              width={b.w}
+              height="56"
+              fill={isPaperMode ? (i % 2 === 0 ? '#F8FAFC' : '#E2E8F0') : b.color}
+              fillOpacity={isPaperMode ? 1 : 0.22}
+              stroke={isPaperMode ? '#000000' : b.color}
+              strokeWidth={1}
+            />
+            <text x="0" y="-8" fill={isPaperMode ? '#000000' : '#FFFFFF'} fontSize="8.5" fontWeight="bold" textAnchor="middle">
+              {b.name}
+            </text>
+            <text x="0" y="8" fill={isPaperMode ? '#334155' : '#94A3B8'} fontSize="7.5" fontFamily="monospace" textAnchor="middle">
+              λ: {b.lambda}
+            </text>
+            <text x="0" y="20" fill={isPaperMode ? '#475569' : '#CBD5E1'} fontSize="7" fontFamily="monospace" textAnchor="middle">
+              f: {b.freq}
+            </text>
+          </g>
+        ))}
+      </g>
+
+      {/* 2. Expanded Visible Spectrum Rainbow Prism Beam (ROYGBIV: 700nm Red to 400nm Violet) */}
+      <g id="visible-spectrum-expansion" transform="translate(0, 0)">
+        {/* Expansion Leader Lines from Visible band down to Prism block */}
+        <polygon points="-3,-45 3,-45 110, -5 -110, -5" fill={isPaperMode ? '#F1F5F9' : '#1E293B'} fillOpacity={isPaperMode ? 0.7 : 0.4} stroke={isPaperMode ? '#94A3B8' : '#475569'} strokeWidth={1} strokeDasharray="3 2" />
+
+        {/* Visible Light Rainbow Strip */}
+        <g transform="translate(0, 8)">
+          <rect x="-140" y="-14" width="280" height="28" rx="4" fill={isPaperMode ? '#FFFFFF' : '#0F172A'} stroke={isPaperMode ? '#000000' : '#E2E8F0'} strokeWidth={1.5} />
+          {/* ROYGBIV color cells */}
+          {[
+            { label: 'Red (700nm)', col: '#EF4444', x: -100, w: 40 },
+            { label: 'Orange (620nm)', col: '#F97316', x: -60, w: 40 },
+            { label: 'Yellow (580nm)', col: '#EAB308', x: -20, w: 40 },
+            { label: 'Green (530nm)', col: '#10B981', x: 20, w: 40 },
+            { label: 'Blue (470nm)', col: '#06B6D4', x: 60, w: 40 },
+            { label: 'Violet (400nm)', col: '#8B5CF6', x: 100, w: 40 }
+          ].map((c, idx) => (
+            <g key={`vis-${idx}`} transform={`translate(${c.x}, 0)`}>
+              <rect x={-c.w / 2} y="-12" width={c.w} height="24" fill={isPaperMode ? '#FFFFFF' : c.col} fillOpacity={isPaperMode ? 1 : 0.85} stroke={isPaperMode ? '#000000' : '#FFFFFF'} strokeWidth={0.75} />
+              <text x="0" y="4" fill={isPaperMode ? '#000000' : '#FFFFFF'} fontSize="7.5" fontWeight="bold" textAnchor="middle">
+                {c.label.split(' ')[0]}
+              </text>
+            </g>
+          ))}
+          <text x="0" y="24" fill={isPaperMode ? '#000000' : '#FDE68A'} fontSize="9" fontWeight="bold" textAnchor="middle">
+            Expanded Visible Spectrum (ROYGBIV: 700 nm → 400 nm)
+          </text>
+        </g>
+      </g>
+
+      {/* 3. Continuous Sinusoidal Transverse Electromagnetic Wave */}
+      {/* Shows increasing frequency (decreasing wavelength) from left to right */}
+      <g id="sinusoidal-em-wave" transform="translate(0, 75)">
+        <rect x="-220" y="-30" width="440" height="60" rx="6" fill={isPaperMode ? '#FFFFFF' : '#090D16'} stroke={isPaperMode ? '#000000' : '#1E293B'} strokeWidth={1.5} />
+        {/* Baseline Center Axis */}
+        <line x1="-210" y1="0" x2="210" y2="0" stroke={isPaperMode ? '#94A3B8' : '#334155'} strokeWidth={1} strokeDasharray="3 3" />
+
+        {/* Dynamic Transverse Sine Wave Path with progressive spatial frequency compression */}
+        <path
+          d="M -210 0 
+             Q -185 -22 -160 0 Q -135 22 -110 0 
+             Q -90 -22 -70 0 Q -50 22 -30 0 
+             Q -15 -22 0 0 Q 15 22 30 0 
+             Q 42 -22 55 0 Q 68 22 80 0 
+             Q 90 -22 100 0 Q 110 22 120 0 
+             Q 128 -22 136 0 Q 144 22 152 0 
+             Q 158 -22 165 0 Q 172 22 178 0 
+             Q 184 -22 190 0 Q 196 22 202 0 Q 206 -22 210 0"
+          fill="none"
+          stroke={isPaperMode ? '#000000' : '#38BDF8'}
+          strokeWidth={isPaperMode ? 2.5 : 3}
+          strokeLinecap="round"
+        />
+
+        {/* Wavelength λ dimension markers */}
+        <g transform="translate(-160, -24)">
+          <line x1="-25" y1="0" x2="25" y2="0" stroke={isPaperMode ? '#000000' : '#F59E0B'} strokeWidth={1.5} />
+          <text x="0" y="-4" fill={isPaperMode ? '#000000' : '#F59E0B'} fontSize="8" fontWeight="bold" textAnchor="middle">Long Wavelength (λ)</text>
+        </g>
+        <g transform="translate(160, -24)">
+          <line x1="-12" y1="0" x2="12" y2="0" stroke={isPaperMode ? '#000000' : '#EF4444'} strokeWidth={1.5} />
+          <text x="0" y="-4" fill={isPaperMode ? '#000000' : '#EF4444'} fontSize="8" fontWeight="bold" textAnchor="middle">Short λ (High E)</text>
+        </g>
+      </g>
+
+      {/* 4. Energy & Frequency Directional Arrows */}
+      <g id="spectrum-energy-gradient" transform="translate(0, 122)">
+        {/* Left-to-Right: Increasing Frequency (f) and Photon Energy (E = hf) */}
+        <line x1="-210" y1="0" x2="210" y2="0" stroke={isPaperMode ? '#000000' : '#EC4899'} strokeWidth={2} strokeLinecap="round" />
+        <polygon points="210,-4 218,0 210,4" fill={isPaperMode ? '#000000' : '#EC4899'} />
+        <text x="0" y="-5" fill={isPaperMode ? '#000000' : '#F472B6'} fontSize="9" fontWeight="bold" textAnchor="middle">
+          Increasing Photon Energy (E = hν) & Frequency (Hz) ────►
+        </text>
+        <text x="0" y="11" fill={isPaperMode ? '#475569' : '#94A3B8'} fontSize="8" textAnchor="middle">
+          ◄──── Increasing Wavelength (λ in meters)
+        </text>
+      </g>
+    </g>
+  );
+};
+
+/**
  * Dynamic Custom SVG Diagram
- * Safely renders customized SVG paths generated by the AI for any arbitrary biological/scientific structure
+ * Safely parses and renders customized SVG paths generated by AI for any arbitrary biological/scientific structure
  */
 export const DynamicCustomSvgDiagram: React.FC<{ svgCode: string; isPaperMode: boolean }> = ({ svgCode, isPaperMode }) => {
+  // Clean up any outer <svg> wrapper or extract inner tags to prevent malformed SVG nesting
+  const sanitizedMarkup = React.useMemo(() => {
+    if (!svgCode || typeof svgCode !== 'string') return '';
+    let cleaned = svgCode.trim();
+    // If wrapped in ```xml or ```svg markdown fences, remove them
+    cleaned = cleaned.replace(/^```(xml|svg|html)?/i, '').replace(/```$/i, '').trim();
+    // If outer <svg> tag is present, extract its children
+    const svgMatch = cleaned.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
+    if (svgMatch && svgMatch[1]) {
+      cleaned = svgMatch[1];
+    }
+    return cleaned;
+  }, [svgCode]);
+
   return (
     <g 
       id="dynamic-custom-svg-container"
       className={isPaperMode ? 'filter contrast-125' : ''}
-      dangerouslySetInnerHTML={{ __html: svgCode }}
+      dangerouslySetInnerHTML={{ __html: sanitizedMarkup }}
     />
   );
 };
+

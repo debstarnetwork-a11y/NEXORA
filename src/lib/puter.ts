@@ -39,88 +39,48 @@ export async function puterGenerateImage(
     attireLock?: string;
     facialFeatures?: string;
     hairStyle?: string;
+    eyeDescription?: string;
+    expressionDescription?: string;
     strictPreservationPrompt?: string;
     styleModifier?: string;
   }
 ): Promise<string> {
   const ready = await ensurePuterReady();
   if (!ready || !window.puter?.ai?.txt2img) {
-    throw new Error('Puter.js is not loaded yet. Please check your internet connection and refresh.');
+    throw new Error('Image generation service is initializing. Please wait a moment and try again.');
   }
 
   const rawUserPrompt = prompt.trim();
-  const promptParts: string[] = [];
-
-  // Subject preservation with authentic skin tone, facial features, and attire
   if (options?.referenceImage) {
-    let subjectHeader = '';
-    if (options.strictPreservationPrompt?.trim()) {
-      subjectHeader = options.strictPreservationPrompt.trim();
-    } else {
-      const subjectTraits: string[] = [];
-      const comp = (options.complexionLock || '').trim();
-      const isPlaceholderComp = !comp || comp.length < 15 || comp.toLowerCase().includes('maintain exact') || comp.toLowerCase().includes('reference photo');
-      if (options.lockComplexion !== false && !isPlaceholderComp) {
-        subjectTraits.push(comp);
-      }
-      if (options.facialFeatures?.trim()) {
-        subjectTraits.push(options.facialFeatures.trim());
-      }
-      if (options.hairStyle?.trim()) {
-        subjectTraits.push(options.hairStyle.trim());
-      }
-      const att = (options.attireLock || '').trim();
-      const isPlaceholderAtt = !att || att.length < 15 || att.toLowerCase().includes('maintain 100%') || att.toLowerCase().includes('reference image');
-      if (options.lockAttire !== false && !isPlaceholderAtt) {
-        subjectTraits.push(`wearing ${att}`);
-      }
+    throw new Error('Reference image editing requires a supported photo transformation model.');
+  }
 
-      if (subjectTraits.length > 0) {
-        subjectHeader = `Ultra-detailed portrait of the exact same subject: ${subjectTraits.join(', ')}`;
-      } else {
-        subjectHeader = 'Ultra-detailed authentic portrait preserving the exact same person, facial likeness, bone structure, and skin tone from reference image';
-      }
-    }
+  const promptLower = rawUserPrompt.toLowerCase();
+  const promptParts: string[] = [rawUserPrompt];
 
-    promptParts.push(subjectHeader);
-
-    let actionPhrase = '';
-    if (options.editMode === 'scene_change') {
-      actionPhrase = `in a new environment: ${rawUserPrompt}`;
-    } else if (options.editMode === 'background_change') {
-      actionPhrase = `placed seamlessly in new background setting: ${rawUserPrompt}`;
-    } else if (options.editMode === 'posture_change') {
-      actionPhrase = `posing naturally: ${rawUserPrompt}`;
-    } else if (options.editMode === 'face_revamp') {
-      actionPhrase = `ultra-high definition facial clarity restoration, razor-sharp focus, natural skin pores: ${rawUserPrompt}`;
-    } else {
-      actionPhrase = rawUserPrompt;
-    }
-    promptParts.push(actionPhrase);
-  } else {
-    promptParts.push(rawUserPrompt);
+  // Complexion precision reinforcement
+  if (/\b(very fair|extremely fair|pale|porcelain|ivory|alabaster|light fair|fair skin|fair complexion)\b/i.test(promptLower)) {
+    promptParts.push('luminous very fair pale porcelain alabaster skin complexion, clear bright porcelain skin tone');
+  } else if (/\b(dark|ebony|deep brown|black skin|dark-skinned|dark complexion)\b/i.test(promptLower)) {
+    promptParts.push('radiant rich dark melanin skin complexion, deep brown glowing skin tone');
+  } else if (/\b(olive|tan|tanned|bronze|bronzed|golden|wheatish)\b/i.test(promptLower)) {
+    promptParts.push('warm golden olive tanned bronze skin complexion, sun-kissed glowing warm skin tone');
   }
 
   if (options?.styleModifier) {
-    promptParts.push(options.styleModifier.replace(/^,\s*/, ''));
-  }
-
-  const isStylizedArt = /stick\s*cartoon|stick\s*figure|cartoon|doodle|line\s*art|sketch|drawing|vector\s*art|pixar|anime|claymation|origami|papercraft|watercolor|oil\s*painting|hand-sketch/i.test(`${rawUserPrompt} ${options?.styleModifier || ''}`);
-
-  if (options?.antiDeformation !== false) {
-    if (isStylizedArt) {
-      promptParts.push('clean crisp artistic craftsmanship, award-winning illustration, pristine details, solid unified composition, single unified frame, no split screen');
-    } else {
-      promptParts.push('photorealistic masterpiece, 8k uhd, razor-sharp focus, symmetrical facial features, anatomically correct hands, natural skin pores, single unified frame, no split screen');
+    const cleanMod = options.styleModifier.replace(/^,\s*/, '').trim();
+    if (cleanMod && !rawUserPrompt.toLowerCase().includes(cleanMod.toLowerCase())) {
+      promptParts.push(cleanMod);
     }
-  } else {
-    promptParts.push('single frame, single image, no split screen');
   }
+
+  // Add clarity and contrast reinforcement to prevent faint or blurry output
+  promptParts.push('rich contrast, sharp focus, 8k resolution, crisp natural lighting');
 
   const enhancedPrompt = promptParts.filter(Boolean).join(', ');
 
   const requestedModel = options?.model || 'black-forest-labs/flux-schnell';
-  const puterQuality = options?.quality === '4K' || options?.quality === '2K' ? '2k' : '1k';
+  const puterQuality = options?.quality?.includes('4K') || options?.quality?.includes('2K') ? '2k' : '1k';
   
   const puterOptions: Record<string, any> = {
     quality: puterQuality
@@ -130,44 +90,30 @@ export async function puterGenerateImage(
     puterOptions.model = requestedModel;
   }
 
-  // Pass reference image to Puter for true image-to-image conditioning
-  if (options?.referenceImage) {
-    puterOptions.input_image = options.referenceImage;
-    puterOptions.input_images = [options.referenceImage];
-  }
-
   try {
     const result = await window.puter.ai.txt2img(enhancedPrompt, puterOptions);
     return extractImageSrc(result);
   } catch (primaryErr: any) {
-    console.warn(`Puter txt2img failed with model ${requestedModel}, attempting fallback...`, primaryErr);
+    console.warn(`Primary generation attempt with model ${requestedModel} failed, retrying...`, primaryErr);
     
-    // Fallback 1: Try GPT-Image-2 if FLUX or another model had an issue
+    // Fallback 1: Try GPT-Image-2
     if (requestedModel !== 'openai/gpt-image-2') {
       try {
         const fbOptions: Record<string, any> = { model: 'openai/gpt-image-2', quality: '1k' };
-        if (options?.referenceImage) {
-          fbOptions.input_image = options.referenceImage;
-          fbOptions.input_images = [options.referenceImage];
-        }
         const fallbackResult = await window.puter.ai.txt2img(enhancedPrompt, fbOptions);
         return extractImageSrc(fallbackResult);
       } catch (fbErr) {
-        console.warn('Fallback to gpt-image-2 failed:', fbErr);
+        console.warn('Alternative model failed:', fbErr);
       }
     }
 
-    // Fallback 2: Try default Puter model
+    // Fallback 2: Default model
     try {
       const defOptions: Record<string, any> = {};
-      if (options?.referenceImage) {
-        defOptions.input_image = options.referenceImage;
-        defOptions.input_images = [options.referenceImage];
-      }
       const defaultResult = await window.puter.ai.txt2img(enhancedPrompt, defOptions);
       return extractImageSrc(defaultResult);
     } catch (finalErr: any) {
-      throw new Error(`Puter image generation failed: ${finalErr?.message || primaryErr?.message || 'Unknown error'}`);
+      throw new Error(`Generation failed: ${finalErr?.message || primaryErr?.message || 'Please try again.'}`);
     }
   }
 }
@@ -200,24 +146,45 @@ export async function puterChat(
     throw new Error('Puter.js AI is not loaded yet. Please check your internet connection.');
   }
 
-  const response = await window.puter.ai.chat(prompt, { model });
+  try {
+    const response = await window.puter.ai.chat(prompt, { model });
 
-  if (typeof response === 'string') {
-    return response;
-  }
-
-  if (response?.message?.content) {
-    if (typeof response.message.content === 'string') {
-      return response.message.content;
+    if (typeof response === 'string') {
+      return response;
     }
-    if (Array.isArray(response.message.content)) {
-      return response.message.content.map((c: any) => c.text || '').join('\n');
+
+    if (response?.message?.content) {
+      if (typeof response.message.content === 'string') {
+        return response.message.content;
+      }
+      if (Array.isArray(response.message.content)) {
+        return response.message.content.map((c: any) => c.text || '').join('\n');
+      }
     }
-  }
 
-  if (response?.text) {
-    return response.text;
-  }
+    if (response?.text) {
+      return response.text;
+    }
 
-  return JSON.stringify(response);
+    return JSON.stringify(response);
+  } catch (err: any) {
+    // If a premium/restricted model like Claude, Grok, Kimi, or GPT-4o failed (e.g. not found, auth required), fallback to gpt-4o-mini
+    if (model.includes('claude') || model.includes('gpt-4o') || model.includes('grok') || model.includes('moonshot') || model.includes('kimi')) {
+      console.warn(`Puter model ${model} failed, attempting fallback to gpt-4o-mini:`, err);
+      try {
+        const fbResponse = await window.puter.ai.chat(prompt, { model: 'gpt-4o-mini' });
+        if (typeof fbResponse === 'string') return fbResponse;
+        if (fbResponse?.message?.content) {
+          if (typeof fbResponse.message.content === 'string') return fbResponse.message.content;
+          if (Array.isArray(fbResponse.message.content)) {
+            return fbResponse.message.content.map((c: any) => c.text || '').join('\n');
+          }
+        }
+        if (fbResponse?.text) return fbResponse.text;
+      } catch (fbErr) {
+        console.warn('Puter fallback to gpt-4o-mini also failed:', fbErr);
+      }
+    }
+    throw err;
+  }
 }
